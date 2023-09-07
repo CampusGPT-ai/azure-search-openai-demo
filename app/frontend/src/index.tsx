@@ -24,6 +24,10 @@ const router = createHashRouter([
                 lazy: () => import("./pages/oneshot/OneShot")
             },
             {
+                path: "profile",
+                lazy: () => import("./pages/profileSetup/ProfileSetup")
+            },
+            {
                 path: "*",
                 lazy: () => import("./pages/NoPage")
             }

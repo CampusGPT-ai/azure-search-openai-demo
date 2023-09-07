@@ -1,0 +1,14 @@
+.profileContainer {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: left;
+    margin: 16px;
+}
+
+.profileTitle {
+    font-size: 4rem;
+    font-weight: 600;
+    margin-top: 0;
+    margin-bottom: 10px;
+}

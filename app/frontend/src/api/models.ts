@@ -46,3 +46,8 @@ export type ChatRequest = {
     approach: Approaches;
     overrides?: AskRequestOverrides;
 };
+
+export type InterestModel = {
+    interest: string;
+    isApplicable: boolean;
+};
