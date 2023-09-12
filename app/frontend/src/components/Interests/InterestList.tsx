@@ -3,22 +3,14 @@ import { InterestModel } from "../../api";
 
 import styles from "./Interest.module.css";
 
-const INTERESTS: InterestModel[] = [
-    { interest: "Team Sports", isApplicable: false },
-    { interest: "Outdoor activities", isApplicable: false },
-    { interest: "Languages", isApplicable: false },
-    { interest: "Travel", isApplicable: false },
-    { interest: "Books/Reading", isApplicable: false },
-    { interest: "Science", isApplicable: false },
-    { interest: "Health & Wellness", isApplicable: false },
-    { interest: "Photography", isApplicable: false },
-    { interest: "Gaming", isApplicable: false }
-];
+interface Props {
+    list: Array<InterestModel>;
+}
 
-export const InterestList = () => {
+export const InterestList = ({ list }: Props) => {
     return (
         <div className={styles.interestList}>
-            {INTERESTS.map((x, i) => (
+            {list.map((x, i) => (
                 <Interest text={x.interest} selected={x.isApplicable} />
             ))}
         </div>

@@ -51,3 +51,8 @@ export type InterestModel = {
     interest: string;
     isApplicable: boolean;
 };
+
+export type InterestsResponse = {
+    list: Array<InterestModel>;
+    error?: string;
+};

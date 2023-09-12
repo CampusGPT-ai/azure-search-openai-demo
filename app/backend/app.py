@@ -4,6 +4,7 @@ import mimetypes
 import os
 import time
 
+
 import aiohttp
 import openai
 from azure.identity.aio import DefaultAzureCredential
@@ -27,12 +28,15 @@ from approaches.chatreadretrieveread import ChatReadRetrieveReadApproach
 from approaches.readdecomposeask import ReadDecomposeAsk
 from approaches.readretrieveread import ReadRetrieveReadApproach
 from approaches.retrievethenread import RetrieveThenReadApproach
+from profile.interest import Interest
 
 CONFIG_OPENAI_TOKEN = "openai_token"
 CONFIG_CREDENTIAL = "azure_credential"
 CONFIG_ASK_APPROACHES = "ask_approaches"
 CONFIG_CHAT_APPROACHES = "chat_approaches"
 CONFIG_BLOB_CONTAINER_CLIENT = "blob_container_client"
+
+
 
 bp = Blueprint("routes", __name__, static_folder='static')
 
@@ -102,6 +106,16 @@ async def chat():
     except Exception as e:
         logging.exception("Exception in /chat")
         return jsonify({"error": str(e)}), 500
+
+@bp.route("/interests", methods=["GET"])
+async def get_all_interests() :
+    data = []
+    data.append(Interest("name2", 0).to_json())
+    data.append(Interest("name22", 0).to_json())
+    data.append(Interest("name2222", 0).to_json())
+
+    return jsonify({"list": data})
+
 
 @bp.before_request
 async def ensure_openai_token():

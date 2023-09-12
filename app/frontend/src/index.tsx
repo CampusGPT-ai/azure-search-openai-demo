@@ -7,6 +7,7 @@ import "./index.css";
 
 import Layout from "./pages/layout/Layout";
 import Chat from "./pages/chat/Chat";
+import ProfileSetup from "./pages/profileSetup/ProfileSetup";
 
 initializeIcons();
 
@@ -25,7 +26,8 @@ const router = createHashRouter([
             },
             {
                 path: "profile",
-                lazy: () => import("./pages/profileSetup/ProfileSetup")
+                element: <ProfileSetup />
+                //lazy: () => import("./pages/profileSetup/ProfileSetup")
             },
             {
                 path: "*",
