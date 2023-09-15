@@ -16,11 +16,3 @@ class InterestHelper():
     def loadUserInterests(user: str):
         return []
     
-    def count_vowels(x):
-        ...
-        i = 0
-        while i <= s
-            if (x[i] in vowels):
-                #increase count
-            # else is not necessary, since nothing to do 
-            return count 

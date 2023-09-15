@@ -11,6 +11,9 @@ from text import nonewlines
 
 
 class ChatReadRetrieveReadApproach(ChatApproach):
+
+    EMBEDDING = "contentVector"
+
     # Chat roles
     SYSTEM = "system"
     USER = "user"
@@ -21,14 +24,15 @@ class ChatReadRetrieveReadApproach(ChatApproach):
     top documents from search, then constructs a prompt with them, and then uses OpenAI to generate an completion
     (answer) with that prompt.
     """
-    system_message_chat_conversation = """Assistant helps the company employees with their healthcare plan questions, and questions about the employee handbook. Be brief in your answers.
+    system_message_chat_conversation = """Assistant helps students with general questions, and questions about academic advising. Be brief in your answers.
 Answer ONLY with the facts listed in the list of sources below. If there isn't enough information below, say you don't know. Do not generate answers that don't use the sources below. If asking a clarifying question to the user would help, ask the question.
 For tabular information return it as an html table. Do not return markdown format. If the question is not in English, answer in the language used in the question.
 Each source has a name followed by colon and the actual information, always include the source name for each fact you use in the response. Use square brackets to reference the source, e.g. [info1.txt]. Don't combine sources, list each source separately, e.g. [info1.txt][info2.pdf].
 {follow_up_questions_prompt}
 {injected_prompt}
 """
-    follow_up_questions_prompt_content = """Generate three very brief follow-up questions that the user would likely ask next about their healthcare plan and employee handbook.
+
+    follow_up_questions_prompt_content = """Generate three very brief follow-up questions that the user would likely ask next.
 Use double angle brackets to reference the questions, e.g. <<Are there exclusions for prescriptions?>>.
 Try not to repeat questions that have already been asked.
 Only generate questions and do not generate any text before or after the questions, such as 'Next Questions'"""
@@ -41,11 +45,19 @@ Do not include any special characters like '+'.
 If the question is not in English, translate the question to English before generating the search query.
 If you cannot generate a search query, return just the number 0.
 """
+
+    follow_up_prompt_template = """Below is a history of the last 5 interactions in the conversation so far.
+Generate a list of the most likely follow up questions of interest based on the most recent history.
+Use double angle brackets to reference the questions, e.g. <<Are there exclusions for prescriptions?>>.
+Try not to repeat questions that have already been asked.
+Only generate questions and do not generate any text before or after the questions, such as 'Next Questions'
+"""
+
     query_prompt_few_shots = [
-        {'role' : USER, 'content' : 'What are my health plans?' },
-        {'role' : ASSISTANT, 'content' : 'Show available health plans' },
-        {'role' : USER, 'content' : 'does my plan cover cardio?' },
-        {'role' : ASSISTANT, 'content' : 'Health plan cardio coverage' }
+        {'role' : USER, 'content' : 'What is academic advising?' },
+        {'role' : ASSISTANT, 'content' : 'Academic advising is a service provided by institutions of higher education to support students in their academic journey.' },
+        {'role' : USER, 'content' : 'What services are provided by an academic advisor?' },
+        {'role' : ASSISTANT, 'content' : 'degree planning, help with financial aid, career advice' }
     ]
 
     def __init__(self, search_client: SearchClient, chatgpt_deployment: str, chatgpt_model: str, embedding_deployment: str, sourcepage_field: str, content_field: str):
@@ -113,14 +125,14 @@ If you cannot generate a search query, return just the number 0.
                                           query_caption="extractive|highlight-false" if use_semantic_captions else None,
                                           vector=query_vector,
                                           top_k=50 if query_vector else None,
-                                          vector_fields="embedding" if query_vector else None)
+                                          vector_fields=self.EMBEDDING if query_vector else None)
         else:
             r = await self.search_client.search(query_text,
                                           filter=filter,
                                           top=top,
                                           vector=query_vector,
                                           top_k=50 if query_vector else None,
-                                          vector_fields="embedding" if query_vector else None)
+                                          vector_fields=self.EMBEDDING if query_vector else None)
         if use_semantic_captions:
             results = [doc[self.sourcepage_field] + ": " + nonewlines(" . ".join([c.text for c in doc['@search.captions']])) async for doc in r]
         else:
@@ -157,11 +169,35 @@ If you cannot generate a search query, return just the number 0.
 
         chat_content = chat_completion.choices[0].message.content
 
+        # STEP 4: Generate a list of follow up questions
+        messages = self.get_messages_from_history(
+            self.follow_up_prompt_template,
+            self.chatgpt_model,
+            history,
+            self.follow_up_questions_prompt_content,
+            [],
+            self.chatgpt_token_limit - len(user_q), 
+            5
+            )
+
+        chat_completion = await openai.ChatCompletion.acreate(
+            deployment_id=self.chatgpt_deployment,
+            model=self.chatgpt_model,
+            messages=messages,
+            temperature=0.0,
+            max_tokens=1024,
+            n=1)
+
+        follow_up_content = chat_completion.choices[0].message.content
+       # follow_up_messages = follow_up_content.split("\n")
+       # for follow_up_message in follow_up_messages:
+       #     chat_content = chat_content + "<<{message}>>".format(message=follow_up_message)
+
         msg_to_display = '\n\n'.join([str(message) for message in messages])
 
-        return {"data_points": results, "answer": chat_content, "thoughts": f"Searched for:<br>{query_text}<br><br>Conversations:<br>" + msg_to_display.replace('\n', '<br>')}
+        return {"data_points": results, "answer": chat_content + "\n" + follow_up_content, "thoughts": f"Searched for:<br>{query_text}<br><br>Conversations:<br>" + msg_to_display.replace('\n', '<br>')}
 
-    def get_messages_from_history(self, system_prompt: str, model_id: str, history: list[dict[str, str]], user_conv: str, few_shots = [], max_tokens: int = 4096) -> list:
+    def get_messages_from_history(self, system_prompt: str, model_id: str, history: list[dict[str, str]], user_conv: str, few_shots = [], max_tokens: int = 4096, max_user_messages: int = 100) -> list:
         message_builder = MessageBuilder(system_prompt, model_id)
 
         # Add examples to show the chat what responses we want. It will try to mimic any responses and make sure they match the rules laid out in the system message.
@@ -173,12 +209,16 @@ If you cannot generate a search query, return just the number 0.
 
         message_builder.append_message(self.USER, user_content, index=append_index)
 
+        user_message_count = 0
         for h in reversed(history[:-1]):
             if bot_msg := h.get("bot"):
                 message_builder.append_message(self.ASSISTANT, bot_msg, index=append_index)
             if user_msg := h.get("user"):
                 message_builder.append_message(self.USER, user_msg, index=append_index)
+                user_message_count = user_message_count + 1
             if message_builder.token_length > max_tokens:
+                break
+            if user_message_count > max_user_messages:
                 break
 
         messages = message_builder.messages

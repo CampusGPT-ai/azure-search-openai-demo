@@ -7,6 +7,7 @@ import time
 
 import aiohttp
 import openai
+from azure.core.credentials import AzureKeyCredential, AzureSasCredential
 from azure.identity.aio import DefaultAzureCredential
 from azure.monitor.opentelemetry import configure_azure_monitor
 from azure.search.documents.aio import SearchClient
@@ -110,9 +111,17 @@ async def chat():
 @bp.route("/interests", methods=["GET"])
 async def get_all_interests() :
     data = []
-    data.append(Interest("name2", 0).to_json())
-    data.append(Interest("name22", 0).to_json())
-    data.append(Interest("name2222", 0).to_json())
+    data.append(Interest("Team sports", 0).to_json())
+    data.append(Interest("Outdoor activities", 0).to_json())
+    data.append(Interest("Music", 0).to_json())
+    data.append(Interest("Performing Arts", 0).to_json())
+    data.append(Interest("Film", 0).to_json())
+    data.append(Interest("Health & Wellness", 0).to_json())
+    data.append(Interest("History", 0).to_json())
+    data.append(Interest("Gaming", 0).to_json())
+    data.append(Interest("Greek Life", 0).to_json())
+    data.append(Interest("Equity, Diversity, and Inclusion", 0).to_json())
+    data.append(Interest("Technology", 0).to_json())
 
     return jsonify({"list": data})
 
@@ -151,10 +160,10 @@ async def setup_clients():
     search_client = SearchClient(
         endpoint=f"https://{AZURE_SEARCH_SERVICE}.search.windows.net",
         index_name=AZURE_SEARCH_INDEX,
-        credential=azure_credential)
+        credential=AzureKeyCredential("UjyJz7CV76kDI1w8ub6IhIQqNtQ4e1a106jXAWhkbSAzSeC9dStf"))
     blob_client = BlobServiceClient(
         account_url=f"https://{AZURE_STORAGE_ACCOUNT}.blob.core.windows.net",
-        credential=azure_credential)
+        credential=AzureSasCredential("?sv=2022-11-02&ss=bfqt&srt=sco&sp=rwdlacupyx&se=2025-01-02T00:31:31Z&st=2023-09-13T16:31:31Z&spr=https&sig=bEtJcUhkuwNxscObZP0W7mvOs4XKzL1Jtw5SyfO7oMw%3D"))
     blob_container_client = blob_client.get_container_client(AZURE_STORAGE_CONTAINER)
 
     # Used by the OpenAI SDK
