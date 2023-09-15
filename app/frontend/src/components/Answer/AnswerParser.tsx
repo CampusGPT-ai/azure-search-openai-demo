@@ -1,5 +1,5 @@
 import { renderToStaticMarkup } from "react-dom/server";
-import { getCitationFilePath } from "../../api";
+import { getCitationFilePath, AskResponse } from "../../api";
 
 type HtmlParsedAnswer = {
     answerHtml: string;
@@ -7,20 +7,20 @@ type HtmlParsedAnswer = {
     followupQuestions: string[];
 };
 
-export function parseAnswerToHtml(answer: string, onCitationClicked: (citationFilePath: string) => void): HtmlParsedAnswer {
+export function parseAnswerToHtml(answer: AskResponse, onCitationClicked: (citationFilePath: string) => void): HtmlParsedAnswer {
     const citations: string[] = [];
-    const followupQuestions: string[] = [];
+    const followupQuestions: string[] = answer.follow_up;
 
     // Extract any follow-up questions that might be in the answer
-    let parsedAnswer = answer.replace(/<<([^>>]+)>>/g, (match, content) => {
-        followupQuestions.push(content);
-        return "";
-    });
+    //let parsedAnswer = answer.replace(/<<([^>>]+)>>/g, (match, content) => {
+    //    followupQuestions.push(content);
+    //    return "";
+    //});
 
     // trim any whitespace from the end of the answer after removing follow-up questions
-    parsedAnswer = parsedAnswer.trim();
+    //parsedAnswer = parsedAnswer.trim();
 
-    const parts = parsedAnswer.split(/\[([^\]]+)\]/g);
+    const parts = answer.answer.split(/\[([^\]]+)\]/g);
 
     const fragments: string[] = parts.map((part, index) => {
         if (index % 2 === 0) {

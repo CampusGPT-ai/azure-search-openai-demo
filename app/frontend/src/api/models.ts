@@ -33,6 +33,7 @@ export type AskResponse = {
     answer: string;
     thoughts: string | null;
     data_points: string[];
+    follow_up: string[];
     error?: string;
 };
 

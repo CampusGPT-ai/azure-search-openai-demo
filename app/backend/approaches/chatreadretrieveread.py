@@ -1,5 +1,6 @@
 from typing import Any
 
+
 import openai
 from azure.search.documents.aio import SearchClient
 from azure.search.documents.models import QueryType
@@ -8,6 +9,9 @@ from approaches.approach import ChatApproach
 from core.messagebuilder import MessageBuilder
 from core.modelhelper import get_token_limit
 from text import nonewlines
+from data.chathistory import ChatHistory
+from quart import jsonify
+import json
 
 
 class ChatReadRetrieveReadApproach(ChatApproach):
@@ -32,10 +36,11 @@ Each source has a name followed by colon and the actual information, always incl
 {injected_prompt}
 """
 
-    follow_up_questions_prompt_content = """Generate three very brief follow-up questions that the user would likely ask next.
-Use double angle brackets to reference the questions, e.g. <<Are there exclusions for prescriptions?>>.
+    follow_up_questions_prompt_content = """Generate three very brief follow-up questions that the user would likely ask next. 
 Try not to repeat questions that have already been asked.
-Only generate questions and do not generate any text before or after the questions, such as 'Next Questions'"""
+Only generate questions and do not generate any text before or after the questions, such as 'Next Questions'.
+Return results in JSON format with questions in an array, following this example 
+[ "next question the user should ask" , "another question to ask" ] . """
 
     query_prompt_template = """Below is a history of the conversation so far, and a new question asked by the user that needs to be answered by searching in a knowledge base about employee healthcare plans and the employee handbook.
 Generate a search query based on the conversation and the new question.
@@ -68,6 +73,7 @@ Only generate questions and do not generate any text before or after the questio
         self.sourcepage_field = sourcepage_field
         self.content_field = content_field
         self.chatgpt_token_limit = get_token_limit(chatgpt_model)
+        self.historyStore = ChatHistory()
 
     async def run(self, history: list[dict[str, str]], overrides: dict[str, Any]) -> Any:
         has_text = overrides.get("retrieval_mode") in ["text", "hybrid", None]
@@ -77,7 +83,11 @@ Only generate questions and do not generate any text before or after the questio
         exclude_category = overrides.get("exclude_category") or None
         filter = "category ne '{}'".format(exclude_category.replace("'", "''")) if exclude_category else None
 
-        user_q = 'Generate search query for: ' + history[-1]["user"]
+        user_query = history[-1]["user"]
+        user_q = 'Generate search query for: ' + user_query
+
+        # load history from persisted store
+        history = self.historyStore.load_message_by_user("rstaudinger")
 
         # STEP 1: Generate an optimized keyword search query based on the chat history and the last question
         messages = self.get_messages_from_history(
@@ -99,7 +109,7 @@ Only generate questions and do not generate any text before or after the questio
 
         query_text = chat_completion.choices[0].message.content
         if query_text.strip() == "0":
-            query_text = history[-1]["user"] # Use the last user input if we failed to generate a better query
+            query_text = user_query # Use the last user input if we failed to generate a better query
 
         # STEP 2: Retrieve relevant documents from the search index with the GPT optimized query
 
@@ -156,18 +166,21 @@ Only generate questions and do not generate any text before or after the questio
             system_message,
             self.chatgpt_model,
             history,
-            history[-1]["user"]+ "\n\nSources:\n" + content, # Model does not handle lengthy system messages well. Moving sources to latest user conversation to solve follow up questions prompt.
+            user_query + "\n\nSources:\n" + content, # Model does not handle lengthy system messages well. Moving sources to latest user conversation to solve follow up questions prompt.
             max_tokens=self.chatgpt_token_limit)
 
         chat_completion = await openai.ChatCompletion.acreate(
             deployment_id=self.chatgpt_deployment,
             model=self.chatgpt_model,
             messages=messages,
-            temperature=overrides.get("temperature") or 0.7,
+            temperature=0,
             max_tokens=1024,
             n=1)
 
         chat_content = chat_completion.choices[0].message.content
+
+        # persist response in chat history
+        self.historyStore.create_interaction("rstaudinger", user_query, chat_content)
 
         # STEP 4: Generate a list of follow up questions
         messages = self.get_messages_from_history(
@@ -189,13 +202,13 @@ Only generate questions and do not generate any text before or after the questio
             n=1)
 
         follow_up_content = chat_completion.choices[0].message.content
-       # follow_up_messages = follow_up_content.split("\n")
-       # for follow_up_message in follow_up_messages:
-       #     chat_content = chat_content + "<<{message}>>".format(message=follow_up_message)
+        follow_up_dict = json.loads(follow_up_content)
 
         msg_to_display = '\n\n'.join([str(message) for message in messages])
 
-        return {"data_points": results, "answer": chat_content + "\n" + follow_up_content, "thoughts": f"Searched for:<br>{query_text}<br><br>Conversations:<br>" + msg_to_display.replace('\n', '<br>')}
+        rv = {"data_points": results, "answer": chat_content, "follow_up": follow_up_dict, "thoughts": f"Searched for:<br>{query_text}<br><br>Conversations:<br>" + msg_to_display.replace('\n', '<br>')}
+        json_rv = jsonify(rv)
+        return rv;
 
     def get_messages_from_history(self, system_prompt: str, model_id: str, history: list[dict[str, str]], user_conv: str, few_shots = [], max_tokens: int = 4096, max_user_messages: int = 100) -> list:
         message_builder = MessageBuilder(system_prompt, model_id)
@@ -210,7 +223,7 @@ Only generate questions and do not generate any text before or after the questio
         message_builder.append_message(self.USER, user_content, index=append_index)
 
         user_message_count = 0
-        for h in reversed(history[:-1]):
+        for h in history:
             if bot_msg := h.get("bot"):
                 message_builder.append_message(self.ASSISTANT, bot_msg, index=append_index)
             if user_msg := h.get("user"):
