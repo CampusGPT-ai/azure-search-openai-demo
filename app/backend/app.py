@@ -30,13 +30,17 @@ from approaches.readdecomposeask import ReadDecomposeAsk
 from approaches.readretrieveread import ReadRetrieveReadApproach
 from approaches.retrievethenread import RetrieveThenReadApproach
 from profile.interest import Interest
+from profile.profile import Profile
+from profile.institution import Institution
+from profile.chathistory import ChatHistory
 
 CONFIG_OPENAI_TOKEN = "openai_token"
 CONFIG_CREDENTIAL = "azure_credential"
 CONFIG_ASK_APPROACHES = "ask_approaches"
 CONFIG_CHAT_APPROACHES = "chat_approaches"
 CONFIG_BLOB_CONTAINER_CLIENT = "blob_container_client"
-
+CONFIG_CURRENT_INSTITUTION = "current_institution"
+CONFIG_CURRENT_USER = "current_user"
 
 
 bp = Blueprint("routes", __name__, static_folder='static')
@@ -123,6 +127,22 @@ async def get_all_interests() :
     data.append(Interest("Equity, Diversity, and Inclusion", 0).to_json())
     data.append(Interest("Technology", 0).to_json())
 
+    #create new institution
+    inst = Institution.create_if_not_exists("fsu")
+    inst.name = "Florida State University"
+    inst.logo = "/logos/fsu.png"
+    inst.save() 
+
+    #create new profile
+    profile = Profile.create_if_not_exists("rstaudinger", inst.id)
+    profile.save()
+
+    loaded_profile = Profile.load_by_id(profile.id)
+    loaded_profile.minor = "Theoretical Physics"
+    loaded_profile.save()
+
+    chatHistory = ChatHistory.load_message_by_user(profile.user_id)
+
     return jsonify({"list": data})
 
 
@@ -147,8 +167,15 @@ async def setup_clients():
     AZURE_OPENAI_CHATGPT_MODEL = os.getenv("AZURE_OPENAI_CHATGPT_MODEL")
     AZURE_OPENAI_EMB_DEPLOYMENT = os.getenv("AZURE_OPENAI_EMB_DEPLOYMENT")
 
+    AZURE_COSMOS_HOST = "https://{host}.documents.azure.com:443/".format(host=os.getenv("AZURE_COSMOS_HOST"))
+    AZURE_COSMOS_DB = os.getenv("AZURE_COSMOS_DB")
+    AZURE_COSMOS_KEY = os.getenv("AZURE_COSMOS_KEY")
+
     KB_FIELDS_CONTENT = os.getenv("KB_FIELDS_CONTENT", "content")
     KB_FIELDS_SOURCEPAGE = os.getenv("KB_FIELDS_SOURCEPAGE", "sourcepage")
+
+    CURRENT_INSTITUTION = os.getenv("CURRENT_INSTITUTION")
+    CURRENT_USER = os.getenv("CURRENT_USER")
 
     # Use the current user identity to authenticate with Azure OpenAI, Cognitive Search and Blob Storage (no secrets needed,
     # just use 'az login' locally, and managed identity when deployed on Azure). If you need to use keys, use separate AzureKeyCredential instances with the
@@ -180,6 +207,12 @@ async def setup_clients():
     current_app.config[CONFIG_CREDENTIAL] = azure_credential
     current_app.config[CONFIG_BLOB_CONTAINER_CLIENT] = blob_container_client
 
+    # setup persistence handlers and 
+    Institution.configure(AZURE_COSMOS_HOST, AZURE_COSMOS_DB, AZURE_COSMOS_KEY)
+    Profile.configure(AZURE_COSMOS_HOST, AZURE_COSMOS_DB, AZURE_COSMOS_KEY)
+    ChatHistory.configure(AZURE_COSMOS_HOST, AZURE_COSMOS_DB, AZURE_COSMOS_KEY)
+
+
     # Various approaches to integrate GPT and external knowledge, most applications will use a single one of these patterns
     # or some derivative, here we include several for exploration purposes
     current_app.config[CONFIG_ASK_APPROACHES] = {
@@ -208,6 +241,8 @@ async def setup_clients():
     current_app.config[CONFIG_CHAT_APPROACHES] = {
         "rrr": ChatReadRetrieveReadApproach(
             search_client,
+            Institution.load_by_id(CURRENT_INSTITUTION),
+            Profile.load_by_user_id(CURRENT_USER),
             AZURE_OPENAI_CHATGPT_DEPLOYMENT,
             AZURE_OPENAI_CHATGPT_MODEL,
             AZURE_OPENAI_EMB_DEPLOYMENT,

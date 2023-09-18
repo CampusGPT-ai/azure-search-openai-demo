@@ -9,7 +9,9 @@ from approaches.approach import ChatApproach
 from core.messagebuilder import MessageBuilder
 from core.modelhelper import get_token_limit
 from text import nonewlines
-from data.chathistory import ChatHistory
+from profile.chathistory import ChatHistory
+from profile.institution import Institution
+from profile.profile import Profile
 from quart import jsonify
 import json
 
@@ -65,7 +67,7 @@ Only generate questions and do not generate any text before or after the questio
         {'role' : ASSISTANT, 'content' : 'degree planning, help with financial aid, career advice' }
     ]
 
-    def __init__(self, search_client: SearchClient, chatgpt_deployment: str, chatgpt_model: str, embedding_deployment: str, sourcepage_field: str, content_field: str):
+    def __init__(self, search_client: SearchClient, current_institution: Institution, current_profile: Profile, chatgpt_deployment: str, chatgpt_model: str, embedding_deployment: str, sourcepage_field: str, content_field: str):
         self.search_client = search_client
         self.chatgpt_deployment = chatgpt_deployment
         self.chatgpt_model = chatgpt_model
@@ -73,8 +75,9 @@ Only generate questions and do not generate any text before or after the questio
         self.sourcepage_field = sourcepage_field
         self.content_field = content_field
         self.chatgpt_token_limit = get_token_limit(chatgpt_model)
-        self.historyStore = ChatHistory()
-
+        self.current_institution = current_institution
+        self.current_profile = current_profile
+        
     async def run(self, history: list[dict[str, str]], overrides: dict[str, Any]) -> Any:
         has_text = overrides.get("retrieval_mode") in ["text", "hybrid", None]
         has_vector = overrides.get("retrieval_mode") in ["vectors", "hybrid", None]
@@ -87,7 +90,7 @@ Only generate questions and do not generate any text before or after the questio
         user_q = 'Generate search query for: ' + user_query
 
         # load history from persisted store
-        history = self.historyStore.load_message_by_user("rstaudinger")
+        history = ChatHistory.load_message_by_user(self.current_profile.user_id)
 
         # STEP 1: Generate an optimized keyword search query based on the chat history and the last question
         messages = self.get_messages_from_history(
@@ -149,7 +152,9 @@ Only generate questions and do not generate any text before or after the questio
             results = [doc[self.sourcepage_field] + ": " + nonewlines(doc[self.content_field]) async for doc in r]
         content = "\n".join(results)
 
-        follow_up_questions_prompt = self.follow_up_questions_prompt_content if overrides.get("suggest_followup_questions") else ""
+        # TODO: revisit whether follow-up should be handled in the same call or separate
+        # follow_up_questions_prompt = self.follow_up_questions_prompt_content if overrides.get("suggest_followup_questions") else ""
+        follow_up_questions_prompt = ""  # blank out so we do not embed follup ups in answer, we will make a separate call for that
 
         # STEP 3: Generate a contextual and content specific answer using the search results and chat history
 
@@ -180,7 +185,7 @@ Only generate questions and do not generate any text before or after the questio
         chat_content = chat_completion.choices[0].message.content
 
         # persist response in chat history
-        self.historyStore.create_interaction("rstaudinger", user_query, chat_content)
+        ChatHistory.create_interaction("rstaudinger", user_query, chat_content)
 
         # STEP 4: Generate a list of follow up questions
         messages = self.get_messages_from_history(
@@ -202,7 +207,7 @@ Only generate questions and do not generate any text before or after the questio
             n=1)
 
         follow_up_content = chat_completion.choices[0].message.content
-        follow_up_dict = json.loads(follow_up_content)
+        follow_up_dict = json.loads(follow_up_content) if follow_up_content is not None else dict()
 
         msg_to_display = '\n\n'.join([str(message) for message in messages])
 
