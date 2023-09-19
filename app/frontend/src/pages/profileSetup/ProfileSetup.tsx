@@ -1,10 +1,11 @@
 import { InterestList } from "../../components/Interests/InterestList";
-import { InterestModel } from "../../api";
+import { ChatHistoryMessageModel, ChatHistoryResponse, InterestModel, chatHistoryApi } from "../../api";
 import { interestsAllApi } from "../../api";
 import { InterestsResponse } from "../../api";
 import { useState, useEffect } from "react";
 
 import styles from "./ProfileSetup.module.css";
+import { UserChatHistory } from "../../components/UserChatHistory/UserChatHistory";
 
 const INTERESTS: InterestModel[] = [
     { interest: "Team Sports", isApplicable: false },
@@ -23,6 +24,7 @@ const ProfileSetup = () => {
     const [error, setError] = useState<unknown>();
 
     const [interests, setInterests] = useState<InterestsResponse | undefined>(undefined);
+    const [chatHistory, setChatHistory] = useState<ChatHistoryResponse | undefined>(undefined);
 
     const makeApiRequest = async () => {
         setIsLoading(true);
@@ -36,21 +38,36 @@ const ProfileSetup = () => {
         }
     };
 
+    const makeHistoryApiRequest = async () => {
+        setIsLoading(true);
+        try {
+            const result = await chatHistoryApi();
+            setChatHistory(result);
+        } catch (e) {
+            setError(e);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     useEffect(() => {
         makeApiRequest();
+        makeHistoryApiRequest();
     }, []);
 
     let list: Array<InterestModel> = [];
     if (interests?.list) list = interests.list;
 
+    let chatHistoryMessages: Array<ChatHistoryMessageModel> = [];
+    if (chatHistory?.list) chatHistoryMessages = chatHistory.list;
+
     return (
         <div className={styles.profileContainer}>
             <h2 className={styles.profileTitle}>Tell us about your interests</h2>
             <InterestList list={list} />
+            <UserChatHistory history={chatHistoryMessages} />
         </div>
     );
 };
 
 export default ProfileSetup;
-
-//#Component.displayName = "ProfileSetup";

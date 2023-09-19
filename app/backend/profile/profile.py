@@ -53,15 +53,6 @@ class Profile:
             # leave profile as none
             p = None
 
-
-        #results = Profile._cosmos_container.query_items(
-        #    query="SELECT * FROM profiles WHERE profiles.id=@id",
-        #    parameters=[
-         #       {"name": "@id", "value": id}
-         #   ],
-         #   enable_cross_partition_query=True
-        #)
-        #p = results.next() if results else None
         return cls(
             p.get("id"), 
             p.get("user_id"),

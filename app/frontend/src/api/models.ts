@@ -57,3 +57,14 @@ export type InterestsResponse = {
     list: Array<InterestModel>;
     error?: string;
 };
+
+export type ChatHistoryMessageModel = {
+    timestamp: string;
+    user: string;
+    bot: string;
+};
+
+export type ChatHistoryResponse = {
+    list: Array<ChatHistoryMessageModel>;
+    error?: string;
+};

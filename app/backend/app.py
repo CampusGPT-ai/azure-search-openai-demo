@@ -146,6 +146,13 @@ async def get_all_interests() :
     return jsonify({"list": data})
 
 
+@bp.route("/chat_history", methods=["GET"])
+async def get_chat_history():
+    user = current_app.config[CONFIG_CURRENT_USER]
+    chat_history = ChatHistory.load_message_by_user(user.user_id)
+    return jsonify({"list": chat_history})
+
+
 @bp.before_request
 async def ensure_openai_token():
     openai_token = current_app.config[CONFIG_OPENAI_TOKEN]
@@ -211,7 +218,10 @@ async def setup_clients():
     Institution.configure(AZURE_COSMOS_HOST, AZURE_COSMOS_DB, AZURE_COSMOS_KEY)
     Profile.configure(AZURE_COSMOS_HOST, AZURE_COSMOS_DB, AZURE_COSMOS_KEY)
     ChatHistory.configure(AZURE_COSMOS_HOST, AZURE_COSMOS_DB, AZURE_COSMOS_KEY)
-
+    current_institution = Institution.load_by_id(CURRENT_INSTITUTION)
+    current_profile = Profile.load_by_user_id(CURRENT_USER)
+    current_app.config[CONFIG_CURRENT_INSTITUTION] = current_institution
+    current_app.config[CONFIG_CURRENT_USER] = current_profile
 
     # Various approaches to integrate GPT and external knowledge, most applications will use a single one of these patterns
     # or some derivative, here we include several for exploration purposes
@@ -241,8 +251,8 @@ async def setup_clients():
     current_app.config[CONFIG_CHAT_APPROACHES] = {
         "rrr": ChatReadRetrieveReadApproach(
             search_client,
-            Institution.load_by_id(CURRENT_INSTITUTION),
-            Profile.load_by_user_id(CURRENT_USER),
+            current_institution,
+            current_profile,
             AZURE_OPENAI_CHATGPT_DEPLOYMENT,
             AZURE_OPENAI_CHATGPT_MODEL,
             AZURE_OPENAI_EMB_DEPLOYMENT,
