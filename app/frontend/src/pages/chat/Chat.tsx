@@ -15,8 +15,11 @@ import { ClearChatButton } from "../../components/ClearChatButton";
 import { UserChatHistory } from "../../components/UserChatHistory/UserChatHistory";
 import { ChatHistoryResponse, ChatHistoryMessageModel } from "../../api";
 import { chatHistoryApi } from "../../api";
+import { interestsAllApi } from "../../api";
+import { InterestsResponse, InterestModel } from "../../api";
 
 import styles from "./Chat.module.css";
+import { InterestList } from "../../components/Interests/InterestList";
 
 const Chat = () => {
     const [isConfigPanelOpen, setIsConfigPanelOpen] = useState(false);
@@ -42,6 +45,7 @@ const Chat = () => {
     const [answers, setAnswers] = useState<[user: string, response: AskResponse][]>([]);
 
     const [chatHistory, setChatHistory] = useState<ChatHistoryResponse | undefined>(undefined);
+    const [interests, setInterests] = useState<InterestsResponse | undefined>(undefined);
 
     const makeApiRequest = async (question: string) => {
         lastQuestionRef.current = question;
@@ -89,6 +93,7 @@ const Chat = () => {
 
     useEffect(() => {
         makeHistoryApiRequest();
+        makeInterestApiRequest();
         chatMessageStreamEnd.current?.scrollIntoView({ behavior: "smooth" }), [isLoading];
     }, []);
 
@@ -169,6 +174,21 @@ const Chat = () => {
         setSelectedAnswer(index);
     };
 
+    const makeInterestApiRequest = async () => {
+        setIsLoading(true);
+        try {
+            const result = await interestsAllApi();
+            setInterests(result);
+        } catch (e) {
+            setError(e);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    let interestList: Array<InterestModel> = [];
+    if (interests?.list) interestList = interests.list;
+
     return (
         <div className={styles.container}>
             <div className={styles.commandsContainer}>
@@ -176,10 +196,11 @@ const Chat = () => {
                 <SettingsButton className={styles.commandButton} onClick={() => setIsConfigPanelOpen(!isConfigPanelOpen)} />
             </div>
             <div className={styles.contentSection}>
-                <h1>Trending Topics</h1>
+                <h1>Your Interests</h1>
+                <InterestList list={interestList} />
             </div>
             <div className={styles.contentSection}>
-                <h1>Your Interests</h1>
+                <h1>Trending Topics</h1>
             </div>
             <div className={styles.historyAndChatGrid}>
                 <div className={styles.contentSection}>

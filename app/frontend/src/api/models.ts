@@ -50,7 +50,7 @@ export type ChatRequest = {
 
 export type InterestModel = {
     interest: string;
-    isApplicable: boolean;
+    selected: boolean;
 };
 
 export type InterestsResponse = {

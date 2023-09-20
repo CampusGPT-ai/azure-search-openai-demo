@@ -6,18 +6,6 @@ import { useState, useEffect } from "react";
 
 import styles from "./ProfileSetup.module.css";
 
-const INTERESTS: InterestModel[] = [
-    { interest: "Team Sports", isApplicable: false },
-    { interest: "Outdoor activities", isApplicable: false },
-    { interest: "Languages", isApplicable: false },
-    { interest: "Travel", isApplicable: false },
-    { interest: "Books/Reading", isApplicable: false },
-    { interest: "Science", isApplicable: false },
-    { interest: "Health & Wellness", isApplicable: false },
-    { interest: "Photography", isApplicable: false },
-    { interest: "Gaming", isApplicable: false }
-];
-
 const ProfileSetup = () => {
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [error, setError] = useState<unknown>();
@@ -54,18 +42,10 @@ const ProfileSetup = () => {
         makeHistoryApiRequest();
     }, []);
 
-    let list: Array<InterestModel> = [];
-    if (interests?.list) list = interests.list;
-
     let chatHistoryMessages: Array<ChatHistoryMessageModel> = [];
     if (chatHistory?.list) chatHistoryMessages = chatHistory.list;
 
-    return (
-        <div className={styles.profileContainer}>
-            <h2 className={styles.profileTitle}>Tell us about your interests</h2>
-            <InterestList list={list} />
-        </div>
-    );
+    return <div className={styles.profileContainer}></div>;
 };
 
 export default ProfileSetup;

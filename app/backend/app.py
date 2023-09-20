@@ -114,36 +114,8 @@ async def chat():
 
 @bp.route("/interests", methods=["GET"])
 async def get_all_interests() :
-    data = []
-    data.append(Interest("Team sports", 0).to_json())
-    data.append(Interest("Outdoor activities", 0).to_json())
-    data.append(Interest("Music", 0).to_json())
-    data.append(Interest("Performing Arts", 0).to_json())
-    data.append(Interest("Film", 0).to_json())
-    data.append(Interest("Health & Wellness", 0).to_json())
-    data.append(Interest("History", 0).to_json())
-    data.append(Interest("Gaming", 0).to_json())
-    data.append(Interest("Greek Life", 0).to_json())
-    data.append(Interest("Equity, Diversity, and Inclusion", 0).to_json())
-    data.append(Interest("Technology", 0).to_json())
-
-    #create new institution
-    inst = Institution.create_if_not_exists("fsu")
-    inst.name = "Florida State University"
-    inst.logo = "/logos/fsu.png"
-    inst.save() 
-
-    #create new profile
-    profile = Profile.create_if_not_exists("rstaudinger", inst.id)
-    profile.save()
-
-    loaded_profile = Profile.load_by_id(profile.id)
-    loaded_profile.minor = "Theoretical Physics"
-    loaded_profile.save()
-
-    chatHistory = ChatHistory.load_message_by_user(profile.user_id)
-
-    return jsonify({"list": data})
+    data = Interest.loadAllInterests()
+    return jsonify({"list": list(map(lambda x: x.to_json(), data))})
 
 
 @bp.route("/chat_history", methods=["GET"])

@@ -1,18 +1,29 @@
+import json
+
 class Interest():
-    def __init__(self, interest: str, isApplicable: bool):
+    def __init__(self, interest: str, selected: bool):
         self.interest = interest
-        self.isApplicable = isApplicable
+        self.selected = selected
 
     def to_json(self):
         return {
             "interest": self.interest,
-            "isApplicable": self.isApplicable
+            "selected": self.selected
         }
     
-class InterestHelper():
+    @staticmethod
     def loadAllInterests():
-        return []
+        with open('data/interests.json') as f:
+            data = json.load(f)
+
+        rv = []
+        for i in data.get("interests"):
+            rv.append(Interest(i, False))
+        return rv
+
     
+class InterestHelper():
+
     def loadUserInterests(user: str):
         return []
     

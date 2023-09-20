@@ -11,7 +11,7 @@ export const InterestList = ({ list }: Props) => {
     return (
         <div className={styles.interestList}>
             {list.map((x, i) => (
-                <Interest text={x.interest} selected={x.isApplicable} />
+                <Interest text={x.interest} selected={false} />
             ))}
         </div>
     );
