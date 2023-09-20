@@ -5,7 +5,6 @@ import { InterestsResponse } from "../../api";
 import { useState, useEffect } from "react";
 
 import styles from "./ProfileSetup.module.css";
-import { UserChatHistory } from "../../components/UserChatHistory/UserChatHistory";
 
 const INTERESTS: InterestModel[] = [
     { interest: "Team Sports", isApplicable: false },
@@ -65,7 +64,6 @@ const ProfileSetup = () => {
         <div className={styles.profileContainer}>
             <h2 className={styles.profileTitle}>Tell us about your interests</h2>
             <InterestList list={list} />
-            <UserChatHistory history={chatHistoryMessages} />
         </div>
     );
 };

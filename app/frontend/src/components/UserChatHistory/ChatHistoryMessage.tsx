@@ -1,4 +1,4 @@
-import { AccordionHeader, AccordionItem, AccordionPanel } from "@fluentui/react-components";
+import { AccordionHeader, AccordionItem, AccordionPanel, Badge } from "@fluentui/react-components";
 
 import { ChatHistoryMessageModel } from "../../api";
 import { Answer } from "../Answer";
@@ -9,21 +9,30 @@ import styles from "./ChatHistoryMessage.module.css";
 interface Props {
     index: number;
     message: ChatHistoryMessageModel;
+    onCitationClicked: (filePath: string) => void;
 }
 
-export const ChatHistoryMessage = ({ index, message }: Props) => {
+const timestampFormat = (timestamp: string): string => {
+    let numericTimestamp = parseInt(timestamp) * 1000;
+    let dateTime = new Date(numericTimestamp);
+    return dateTime.toLocaleDateString() + " " + dateTime.toLocaleTimeString();
+};
+
+export const ChatHistoryMessage = ({ index, message, onCitationClicked }: Props) => {
     let askResponse: AskResponse = { answer: message.bot, thoughts: null, follow_up: [], data_points: [] };
+
     return (
         <AccordionItem value={index}>
-            <AccordionHeader as="h4">{message.user}</AccordionHeader>
+            <AccordionHeader as="div">
+                <h4 className={styles.userQuestion}>{message.user}</h4>
+                <Badge appearance="tint">{timestampFormat(message.timestamp)}</Badge>
+            </AccordionHeader>
             <AccordionPanel className={styles.container}>
                 <Answer
                     key={index}
                     answer={askResponse}
                     isSelected={true}
-                    onCitationClicked={() => {
-                        void 0;
-                    }}
+                    onCitationClicked={onCitationClicked}
                     onThoughtProcessClicked={() => {
                         void 0;
                     }}

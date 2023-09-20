@@ -26,11 +26,11 @@ class ChatHistory:
 
 
     @staticmethod
-    def get_interaction(user_id, user_content, bot_content):
+    def get_interaction(user_id, user_content, bot_content, timestamp=time.time()):
         message = {
             'id': str(uuid.uuid4()),
             'user_id': user_id,
-            'timestamp': time.time(),
+            'timestamp': timestamp,
             'user' : user_content,
             'bot' : bot_content
         }
@@ -55,6 +55,6 @@ class ChatHistory:
 
         messages = []
         for item in items:
-            messages.append(self.get_interaction(item.get("user_id"), item.get("user"), item.get("bot")))
+            messages.append(self.get_interaction(item.get("user_id"), item.get("user"), item.get("bot"), item.get("timestamp")))
         
         return messages

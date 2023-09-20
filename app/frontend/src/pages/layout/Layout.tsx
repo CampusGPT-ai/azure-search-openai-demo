@@ -1,7 +1,6 @@
 import { Outlet, NavLink, Link } from "react-router-dom";
 import { Persona } from "@fluentui/react-components";
-import * as React from "react";
-import type { PersonaProps } from "@fluentui/react-components";
+
 import github from "../../assets/github.svg";
 
 import styles from "./Layout.module.css";

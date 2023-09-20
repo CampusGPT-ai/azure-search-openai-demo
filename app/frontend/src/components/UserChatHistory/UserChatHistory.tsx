@@ -7,13 +7,14 @@ import styles from "./UserChatHistory.module.css";
 
 interface Props {
     history: Array<ChatHistoryMessageModel>;
+    onCitationClicked: (filePath: string) => void;
 }
 
-export const UserChatHistory = ({ history }: Props) => {
+export const UserChatHistory = ({ history, onCitationClicked }: Props) => {
     return (
         <Accordion multiple collapsible>
             {history.map((x, i) => (
-                <ChatHistoryMessage index={i} message={x} />
+                <ChatHistoryMessage index={i} message={x} onCitationClicked={onCitationClicked} />
             ))}
         </Accordion>
     );

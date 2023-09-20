@@ -1,6 +1,8 @@
 import { useRef, useState, useEffect } from "react";
 import { Checkbox, Panel, DefaultButton, TextField, SpinButton, Dropdown, IDropdownOption } from "@fluentui/react";
-import { SparkleFilled } from "@fluentui/react-icons";
+import { Drawer, DrawerOverlay, DrawerBody, DrawerHeader, DrawerHeaderTitle } from "@fluentui/react-components/unstable";
+import { Dismiss24Regular } from "@fluentui/react-icons";
+import { Button } from "@fluentui/react-components";
 
 import { chatApi, RetrievalMode, Approaches, AskResponse, ChatRequest, ChatTurn } from "../../api";
 import { Answer, AnswerError, AnswerLoading } from "../../components/Answer";
@@ -18,6 +20,7 @@ import styles from "./Chat.module.css";
 
 const Chat = () => {
     const [isConfigPanelOpen, setIsConfigPanelOpen] = useState(false);
+    const [isCitationPanelOpen, setIsCitationPanelOpen] = useState(false);
     const [promptTemplate, setPromptTemplate] = useState<string>("");
     const [retrieveCount, setRetrieveCount] = useState<number>(3);
     const [retrievalMode, setRetrievalMode] = useState<RetrievalMode>(RetrievalMode.Hybrid);
@@ -132,17 +135,30 @@ const Chat = () => {
         makeApiRequest(example);
     };
 
+    const onDrawerClose = (closed: boolean) => {
+        setIsCitationPanelOpen(closed);
+    };
+
     const onShowCitation = (citation: string, index: number) => {
-        if (activeCitation === citation && activeAnalysisPanelTab === AnalysisPanelTabs.CitationTab && selectedAnswer === index) {
+        if (activeCitation === citation && selectedAnswer === index) {
             setActiveAnalysisPanelTab(undefined);
+            setIsCitationPanelOpen(false);
         } else {
             setActiveCitation(citation);
-            setActiveAnalysisPanelTab(AnalysisPanelTabs.CitationTab);
+            setIsCitationPanelOpen(true);
         }
 
         setSelectedAnswer(index);
     };
 
+    const onShowCitationFromHistory = (citation: string) => {
+        if (activeCitation === citation) {
+            setIsCitationPanelOpen(false);
+        } else {
+            setActiveCitation(citation);
+            setIsCitationPanelOpen(true);
+        }
+    };
     const onToggleTab = (tab: AnalysisPanelTabs, index: number) => {
         if (activeAnalysisPanelTab === tab && selectedAnswer === index) {
             setActiveAnalysisPanelTab(undefined);
@@ -168,7 +184,7 @@ const Chat = () => {
             <div className={styles.historyAndChatGrid}>
                 <div className={styles.contentSection}>
                     <h2>Chat History</h2>
-                    <UserChatHistory history={chatHistoryMessages} />
+                    <UserChatHistory history={chatHistoryMessages} onCitationClicked={c => onShowCitationFromHistory(c)} />
                 </div>
                 <div className={[styles.contentSection, styles.chatRoot].filter(item => !!item).join(" ")}>
                     <div className={styles.chatContainer}>
@@ -237,6 +253,26 @@ const Chat = () => {
                             activeTab={activeAnalysisPanelTab}
                         />
                     )}
+
+                    <DrawerOverlay
+                        className={styles.citationPanelContainer}
+                        open={isCitationPanelOpen}
+                        onOpenChange={(_, { open }) => onDrawerClose(open)}
+                        size="large"
+                        position="end"
+                    >
+                        <DrawerHeader className={styles.citationPanelHeader}>
+                            <DrawerHeaderTitle
+                                className={styles.citationPanelHeaderTitle}
+                                action={<Button appearance="subtle" aria-label="Close" icon={<Dismiss24Regular />} onClick={() => onDrawerClose(false)} />}
+                            >
+                                Citation source
+                            </DrawerHeaderTitle>
+                        </DrawerHeader>
+                        <DrawerBody>
+                            <iframe title="Citation" src={activeCitation} width="100%" height="810px" />
+                        </DrawerBody>
+                    </DrawerOverlay>
 
                     <Panel
                         headerText="Configure answer generation"

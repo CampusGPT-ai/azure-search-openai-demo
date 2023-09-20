@@ -127,3 +127,18 @@
     padding: 12px;
     margin: 16px;
 }
+
+.citationPanelHeader {
+    background: #d50032;
+}
+
+.citationPanelHeaderTitle {
+    color: white;
+    font-weight: bold;
+    padding-right: 24px;
+}
+
+.citationPanelContainer {
+    padding: 8px;
+    border: gray 2px solid;
+}
