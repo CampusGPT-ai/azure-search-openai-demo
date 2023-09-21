@@ -9,7 +9,9 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "watch": "tsc && vite build --watch"
+    "watch": "tsc && vite build --watch",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
   },
   "dependencies": {
     "@fluentui/react": "^8.110.7",
@@ -19,15 +21,25 @@
     "dompurify": "^3.0.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-router-dom": "^6.14.1"
+    "react-router-dom": "^6.14.1",
+    "uuid": "^9.0.1"
   },
   "devDependencies": {
+    "@storybook/addon-essentials": "^7.4.3",
+    "@storybook/addon-interactions": "^7.4.3",
+    "@storybook/addon-links": "^7.4.3",
+    "@storybook/addon-onboarding": "^1.0.8",
+    "@storybook/blocks": "^7.4.3",
+    "@storybook/react": "^7.4.3",
+    "@storybook/react-vite": "^7.4.3",
+    "@storybook/testing-library": "^0.2.1",
     "@types/dompurify": "^3.0.2",
     "@types/react": "^18.2.14",
     "@types/react-dom": "^18.2.6",
     "@vitejs/plugin-react": "^4.0.2",
     "@wixc3/react-board": "^2.3.0",
     "prettier": "^3.0.0",
+    "storybook": "^7.4.3",
     "typescript": "^5.1.6",
     "vite": "^4.4.2"
   }

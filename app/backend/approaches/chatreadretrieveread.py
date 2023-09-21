@@ -2,6 +2,8 @@ from typing import Any
 
 
 import openai
+import time
+import uuid
 from azure.search.documents.aio import SearchClient
 from azure.search.documents.models import QueryType
 
@@ -12,6 +14,7 @@ from text import nonewlines
 from profile.chathistory import ChatHistory
 from profile.institution import Institution
 from profile.profile import Profile
+from profile.conversation import Conversation
 from quart import jsonify
 import json
 
@@ -34,8 +37,9 @@ class ChatReadRetrieveReadApproach(ChatApproach):
 Answer ONLY with the facts listed in the list of sources below. If there isn't enough information below, say you don't know. Do not generate answers that don't use the sources below. If asking a clarifying question to the user would help, ask the question.
 For tabular information return it as an html table. Do not return markdown format. If the question is not in English, answer in the language used in the question.
 Each source has a name followed by colon and the actual information, always include the source name for each fact you use in the response. Use square brackets to reference the source, e.g. [info1.txt]. Don't combine sources, list each source separately, e.g. [info1.txt][info2.pdf].
-{follow_up_questions_prompt}
-{injected_prompt}
+Include the main topic of the current chat session in the respons.
+Return results in JSON format with the answer and topic as separate elements, following this example 
+{ "topic": "conversation topic", "answer": "response to user question" }.
 """
 
     follow_up_questions_prompt_content = """Generate three very brief follow-up questions that the user would likely ask next. 
@@ -67,7 +71,7 @@ Only generate questions and do not generate any text before or after the questio
         {'role' : ASSISTANT, 'content' : 'degree planning, help with financial aid, career advice' }
     ]
 
-    def __init__(self, search_client: SearchClient, current_institution: Institution, current_profile: Profile, chatgpt_deployment: str, chatgpt_model: str, embedding_deployment: str, sourcepage_field: str, content_field: str):
+    def __init__(self, search_client: SearchClient, current_institution: Institution, current_profile: Profile, current_session_id: str, chatgpt_deployment: str, chatgpt_model: str, embedding_deployment: str, sourcepage_field: str, content_field: str):
         self.search_client = search_client
         self.chatgpt_deployment = chatgpt_deployment
         self.chatgpt_model = chatgpt_model
@@ -77,6 +81,7 @@ Only generate questions and do not generate any text before or after the questio
         self.chatgpt_token_limit = get_token_limit(chatgpt_model)
         self.current_institution = current_institution
         self.current_profile = current_profile
+        self.current_session = current_session_id
         
     async def run(self, history: list[dict[str, str]], overrides: dict[str, Any]) -> Any:
         has_text = overrides.get("retrieval_mode") in ["text", "hybrid", None]
@@ -89,8 +94,17 @@ Only generate questions and do not generate any text before or after the questio
         user_query = history[-1]["user"]
         user_q = 'Generate search query for: ' + user_query
 
+        conversation_id = overrides.get("conversation_id")
+        if conversation_id is None or conversation_id == '':
+            conversation_id = str(uuid.uuid4())
+
+        currentConversation = Conversation.create_if_not_exists(
+            id=conversation_id, 
+            session_id=self.current_session ,
+            user_id=self.current_profile.user_id)
+
         # load history from persisted store
-        history = ChatHistory.load_message_by_user(self.current_profile.user_id)
+        history = ChatHistory.load_by_conversation(currentConversation.id)
 
         # STEP 1: Generate an optimized keyword search query based on the chat history and the last question
         messages = self.get_messages_from_history(
@@ -159,18 +173,18 @@ Only generate questions and do not generate any text before or after the questio
         # STEP 3: Generate a contextual and content specific answer using the search results and chat history
 
         # Allow client to replace the entire prompt, or to inject into the exiting prompt using >>>
-        prompt_override = overrides.get("prompt_override")
-        if prompt_override is None:
-            system_message = self.system_message_chat_conversation.format(injected_prompt="", follow_up_questions_prompt=follow_up_questions_prompt)
-        elif prompt_override.startswith(">>>"):
-            system_message = self.system_message_chat_conversation.format(injected_prompt=prompt_override[3:] + "\n", follow_up_questions_prompt=follow_up_questions_prompt)
-        else:
-            system_message = prompt_override.format(follow_up_questions_prompt=follow_up_questions_prompt)
+    #    prompt_override = overrides.get("prompt_override")
+    #    if prompt_override is None:
+    #        system_message = self.system_message_chat_conversation.format(injected_prompt="", follow_up_questions_prompt=follow_up_questions_prompt)
+    #    elif prompt_override.startswith(">>>"):
+    #        system_message = self.system_message_chat_conversation.format(injected_prompt=prompt_override[3:] + "\n", follow_up_questions_prompt=follow_up_questions_prompt)
+    #    else:
+    #        system_message = prompt_override.format(follow_up_questions_prompt=follow_up_questions_prompt)
 
         messages = self.get_messages_from_history(
-            system_message,
+            self.system_message_chat_conversation,
             self.chatgpt_model,
-            history,
+            [],
             user_query + "\n\nSources:\n" + content, # Model does not handle lengthy system messages well. Moving sources to latest user conversation to solve follow up questions prompt.
             max_tokens=self.chatgpt_token_limit)
 
@@ -182,10 +196,23 @@ Only generate questions and do not generate any text before or after the questio
             max_tokens=1024,
             n=1)
 
-        chat_content = chat_completion.choices[0].message.content
+        chat_content_json = json.loads(chat_completion.choices[0].message.content)
+
+        # persist the current conversation and update end time
+        currentConversation.end_time = time.time()
+
+        # if this is a new conversation, capture the topic
+        if currentConversation.isNew:
+            currentConversation.topic = chat_content_json.get("topic")
+        currentConversation.save()
 
         # persist response in chat history
-        ChatHistory.create_interaction("rstaudinger", user_query, chat_content)
+        ChatHistory.create_interaction(
+            conversation_id=currentConversation.id, 
+            user_id=self.current_profile.user_id, 
+            user_content=user_query, 
+            bot_content=chat_content_json.get("answer")
+        )
 
         # STEP 4: Generate a list of follow up questions
         messages = self.get_messages_from_history(
@@ -207,13 +234,25 @@ Only generate questions and do not generate any text before or after the questio
             n=1)
 
         follow_up_content = chat_completion.choices[0].message.content
-        follow_up_dict = json.loads(follow_up_content) if follow_up_content is not None else dict()
+        follow_up_dict = dict()
+        try:
+            follow_up_dict = json.loads(follow_up_content)
+        except:
+            # without sufficient history openai will not return follow up, but a message saying it needs more history
+            # ignore when parsing fails
+            follow_up_dict = dict()
 
         msg_to_display = '\n\n'.join([str(message) for message in messages])
 
-        rv = {"data_points": results, "answer": chat_content, "follow_up": follow_up_dict, "thoughts": f"Searched for:<br>{query_text}<br><br>Conversations:<br>" + msg_to_display.replace('\n', '<br>')}
+        rv = {
+            "conversation_id": currentConversation.id,
+            "data_points": results, 
+            "answer": chat_content_json.get("answer"), 
+            "follow_up": follow_up_dict, 
+            "thoughts": f"Searched for:<br>{query_text}<br><br>Conversations:<br>" + msg_to_display.replace('\n', '<br>')
+        }
         json_rv = jsonify(rv)
-        return rv;
+        return rv
 
     def get_messages_from_history(self, system_prompt: str, model_id: str, history: list[dict[str, str]], user_conv: str, few_shots = [], max_tokens: int = 4096, max_user_messages: int = 100) -> list:
         message_builder = MessageBuilder(system_prompt, model_id)

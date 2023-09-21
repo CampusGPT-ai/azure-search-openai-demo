@@ -44,6 +44,7 @@ export function Component(): JSX.Element {
                 question,
                 approach,
                 overrides: {
+                    conversationId: "",
                     promptTemplate: promptTemplate.length === 0 ? undefined : promptTemplate,
                     promptTemplatePrefix: promptTemplatePrefix.length === 0 ? undefined : promptTemplatePrefix,
                     promptTemplateSuffix: promptTemplateSuffix.length === 0 ? undefined : promptTemplateSuffix,
@@ -145,6 +146,7 @@ export function Component(): JSX.Element {
                         placeholder="Example: Does my plan cover annual eye exams?"
                         disabled={isLoading}
                         onSend={question => makeApiRequest(question)}
+                        onNewChatClicked={() => {}}
                     />
                 </div>
             </div>

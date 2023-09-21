@@ -3,6 +3,7 @@ import logging
 import mimetypes
 import os
 import time
+import uuid
 
 
 import aiohttp
@@ -33,6 +34,7 @@ from profile.interest import Interest
 from profile.profile import Profile
 from profile.institution import Institution
 from profile.chathistory import ChatHistory
+from profile.conversation import Conversation
 
 CONFIG_OPENAI_TOKEN = "openai_token"
 CONFIG_CREDENTIAL = "azure_credential"
@@ -118,11 +120,20 @@ async def get_all_interests() :
     return jsonify({"list": list(map(lambda x: x.to_json(), data))})
 
 
-@bp.route("/chat_history", methods=["GET"])
-async def get_chat_history():
+@bp.route("/conversations", methods=["GET"])
+async def get_conversations():
     user = current_app.config[CONFIG_CURRENT_USER]
-    chat_history = ChatHistory.load_message_by_user(user.user_id)
-    return jsonify({"list": chat_history})
+    convos = Conversation.load_by_user(user.user_id)
+    rv = []
+    for convo in convos:
+        json = convo.to_json()
+        interactions = ChatHistory.load_by_conversation(convo.id)
+        # we are only interested in conversation that had an interaction
+        if (len(interactions) > 0):
+            json["interactions"] = interactions
+            rv.append(json)
+
+    return jsonify({"list": rv})
 
 
 @bp.before_request
@@ -190,6 +201,8 @@ async def setup_clients():
     Institution.configure(AZURE_COSMOS_HOST, AZURE_COSMOS_DB, AZURE_COSMOS_KEY)
     Profile.configure(AZURE_COSMOS_HOST, AZURE_COSMOS_DB, AZURE_COSMOS_KEY)
     ChatHistory.configure(AZURE_COSMOS_HOST, AZURE_COSMOS_DB, AZURE_COSMOS_KEY)
+    Conversation.configure(AZURE_COSMOS_HOST, AZURE_COSMOS_DB, AZURE_COSMOS_KEY)
+
     current_institution = Institution.load_by_id(CURRENT_INSTITUTION)
     current_profile = Profile.load_by_user_id(CURRENT_USER)
     current_app.config[CONFIG_CURRENT_INSTITUTION] = current_institution
@@ -225,6 +238,7 @@ async def setup_clients():
             search_client,
             current_institution,
             current_profile,
+            str(uuid.uuid4()),
             AZURE_OPENAI_CHATGPT_DEPLOYMENT,
             AZURE_OPENAI_CHATGPT_MODEL,
             AZURE_OPENAI_EMB_DEPLOYMENT,

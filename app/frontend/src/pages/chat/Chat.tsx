@@ -1,4 +1,5 @@
 import { useRef, useState, useEffect } from "react";
+import { v4 as uuid } from "uuid";
 import { Checkbox, Panel, DefaultButton, TextField, SpinButton, Dropdown, IDropdownOption } from "@fluentui/react";
 import { Drawer, DrawerOverlay, DrawerBody, DrawerHeader, DrawerHeaderTitle } from "@fluentui/react-components/unstable";
 import { Dismiss24Regular } from "@fluentui/react-icons";
@@ -13,13 +14,14 @@ import { AnalysisPanel, AnalysisPanelTabs } from "../../components/AnalysisPanel
 import { SettingsButton } from "../../components/SettingsButton";
 import { ClearChatButton } from "../../components/ClearChatButton";
 import { UserChatHistory } from "../../components/UserChatHistory/UserChatHistory";
-import { ChatHistoryResponse, ChatHistoryMessageModel } from "../../api";
-import { chatHistoryApi } from "../../api";
+import { ConversationsResponse, ConversationsModel, ChatHistoryMessageModel } from "../../api";
+import { conversationsApi } from "../../api";
 import { interestsAllApi } from "../../api";
 import { InterestsResponse, InterestModel } from "../../api";
 
 import styles from "./Chat.module.css";
 import { InterestList } from "../../components/Interests/InterestList";
+import { UserConversations } from "../../components/UserChatHistory/UserConversations";
 
 const Chat = () => {
     const [isConfigPanelOpen, setIsConfigPanelOpen] = useState(false);
@@ -44,8 +46,10 @@ const Chat = () => {
     const [selectedAnswer, setSelectedAnswer] = useState<number>(0);
     const [answers, setAnswers] = useState<[user: string, response: AskResponse][]>([]);
 
-    const [chatHistory, setChatHistory] = useState<ChatHistoryResponse | undefined>(undefined);
+    const [conversations, setConversations] = useState<ConversationsResponse | undefined>(undefined);
     const [interests, setInterests] = useState<InterestsResponse | undefined>(undefined);
+
+    const [conversationId, setConversationId] = useState<string>(uuid().toString());
 
     const makeApiRequest = async (question: string) => {
         lastQuestionRef.current = question;
@@ -61,6 +65,7 @@ const Chat = () => {
                 history: [...history, { user: question, bot: undefined }],
                 approach: Approaches.ReadRetrieveRead,
                 overrides: {
+                    conversationId: conversationId,
                     promptTemplate: promptTemplate.length === 0 ? undefined : promptTemplate,
                     excludeCategory: excludeCategory.length === 0 ? undefined : excludeCategory,
                     top: retrieveCount,
@@ -72,6 +77,7 @@ const Chat = () => {
             };
             const result = await chatApi(request);
             setAnswers([...answers, [question, result]]);
+            setConversationId(result.conversation_id);
         } catch (e) {
             setError(e);
         } finally {
@@ -79,11 +85,11 @@ const Chat = () => {
         }
     };
 
-    const makeHistoryApiRequest = async () => {
+    const makeConversationsApiRequest = async () => {
         setIsLoading(true);
         try {
-            const result = await chatHistoryApi();
-            setChatHistory(result);
+            const result = await conversationsApi();
+            setConversations(result);
         } catch (e) {
             setError(e);
         } finally {
@@ -92,13 +98,10 @@ const Chat = () => {
     };
 
     useEffect(() => {
-        makeHistoryApiRequest();
+        makeConversationsApiRequest();
         makeInterestApiRequest();
         chatMessageStreamEnd.current?.scrollIntoView({ behavior: "smooth" }), [isLoading];
     }, []);
-
-    let chatHistoryMessages: Array<ChatHistoryMessageModel> = [];
-    if (chatHistory?.list) chatHistoryMessages = chatHistory.list;
 
     const clearChat = () => {
         lastQuestionRef.current = "";
@@ -186,8 +189,15 @@ const Chat = () => {
         }
     };
 
+    const startNewChat = () => {
+        setConversationId("");
+    };
+
     let interestList: Array<InterestModel> = [];
     if (interests?.list) interestList = interests.list;
+
+    let conversationsList: Array<ConversationsModel> = [];
+    if (conversations?.list) conversationsList = conversations.list;
 
     return (
         <div className={styles.container}>
@@ -204,8 +214,8 @@ const Chat = () => {
             </div>
             <div className={styles.historyAndChatGrid}>
                 <div className={styles.contentSection}>
-                    <h2>Chat History</h2>
-                    <UserChatHistory history={chatHistoryMessages} onCitationClicked={c => onShowCitationFromHistory(c)} />
+                    <h2>Conversation History</h2>
+                    <UserConversations conversations={conversationsList} onCitationClicked={c => onShowCitationFromHistory(c)} />
                 </div>
                 <div className={[styles.contentSection, styles.chatRoot].filter(item => !!item).join(" ")}>
                     <div className={styles.chatContainer}>
@@ -256,6 +266,7 @@ const Chat = () => {
 
                         <div className={styles.chatInput}>
                             <QuestionInput
+                                onNewChatClicked={() => startNewChat()}
                                 clearOnSend
                                 placeholder="Type a new question (e.g. does my plan cover annual eye exams?)"
                                 disabled={isLoading}

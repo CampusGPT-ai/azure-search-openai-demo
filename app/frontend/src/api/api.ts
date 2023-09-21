@@ -1,4 +1,4 @@
-import { AskRequest, AskResponse, ChatRequest, InterestsResponse, ChatHistoryResponse } from "./models";
+import { AskRequest, AskResponse, ChatRequest, InterestsResponse, ConversationsResponse } from "./models";
 
 export async function askApi(options: AskRequest): Promise<AskResponse> {
     const response = await fetch("/ask", {
@@ -10,6 +10,7 @@ export async function askApi(options: AskRequest): Promise<AskResponse> {
             question: options.question,
             approach: options.approach,
             overrides: {
+                conversation_id: options.overrides?.conversationId,
                 retrieval_mode: options.overrides?.retrievalMode,
                 semantic_ranker: options.overrides?.semanticRanker,
                 semantic_captions: options.overrides?.semanticCaptions,
@@ -41,6 +42,7 @@ export async function chatApi(options: ChatRequest): Promise<AskResponse> {
             history: options.history,
             approach: options.approach,
             overrides: {
+                conversation_id: options.overrides?.conversationId,
                 retrieval_mode: options.overrides?.retrievalMode,
                 semantic_ranker: options.overrides?.semanticRanker,
                 semantic_captions: options.overrides?.semanticCaptions,
@@ -79,15 +81,15 @@ export async function interestsAllApi(): Promise<InterestsResponse> {
     return parsedResponse;
 }
 
-export async function chatHistoryApi(): Promise<ChatHistoryResponse> {
-    const response = await fetch("/chat_history", {
+export async function conversationsApi(): Promise<ConversationsResponse> {
+    const response = await fetch("/conversations", {
         method: "GET",
         headers: {
             "Content-Type": "application/json"
         }
     });
 
-    const parsedResponse: ChatHistoryResponse = await response.json();
+    const parsedResponse: ConversationsResponse = await response.json();
     if (response.status > 299 || !response.ok) {
         throw Error(parsedResponse.error || "Unknown error");
     }
