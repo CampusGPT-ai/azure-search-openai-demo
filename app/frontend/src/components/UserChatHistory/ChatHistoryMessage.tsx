@@ -13,7 +13,7 @@ interface Props {
 }
 
 export const ChatHistoryMessage = ({ index, message, onCitationClicked }: Props) => {
-    let askResponse: AskResponse = { conversation_id: "", answer: message.bot, thoughts: null, follow_up: [], data_points: [] };
+    let askResponse: AskResponse = { conversation_id: "", conversation_topic: "", answer: message.bot, thoughts: null, follow_up: [], data_points: [] };
 
     return (
         <AccordionItem value={index}>

@@ -11,6 +11,7 @@ export async function askApi(options: AskRequest): Promise<AskResponse> {
             approach: options.approach,
             overrides: {
                 conversation_id: options.overrides?.conversationId,
+                is_new_conversation: options.overrides?.isNewConversation,
                 retrieval_mode: options.overrides?.retrievalMode,
                 semantic_ranker: options.overrides?.semanticRanker,
                 semantic_captions: options.overrides?.semanticCaptions,
@@ -43,6 +44,7 @@ export async function chatApi(options: ChatRequest): Promise<AskResponse> {
             approach: options.approach,
             overrides: {
                 conversation_id: options.overrides?.conversationId,
+                is_new_conversation: options.overrides?.isNewConversation,
                 retrieval_mode: options.overrides?.retrievalMode,
                 semantic_ranker: options.overrides?.semanticRanker,
                 semantic_captions: options.overrides?.semanticCaptions,

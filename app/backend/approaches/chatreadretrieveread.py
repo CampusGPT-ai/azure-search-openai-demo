@@ -98,6 +98,8 @@ Only generate questions and do not generate any text before or after the questio
         if conversation_id is None or conversation_id == '':
             conversation_id = str(uuid.uuid4())
 
+        isNewConversation = overrides.get("is_new_conversation")
+        
         currentConversation = Conversation.create_if_not_exists(
             id=conversation_id, 
             session_id=self.current_session ,
@@ -202,7 +204,7 @@ Only generate questions and do not generate any text before or after the questio
         currentConversation.end_time = time.time()
 
         # if this is a new conversation, capture the topic
-        if currentConversation.isNew:
+        if isNewConversation:
             currentConversation.topic = chat_content_json.get("topic")
         currentConversation.save()
 
@@ -246,6 +248,7 @@ Only generate questions and do not generate any text before or after the questio
 
         rv = {
             "conversation_id": currentConversation.id,
+            "conversation_topic": currentConversation.topic,
             "data_points": results, 
             "answer": chat_content_json.get("answer"), 
             "follow_up": follow_up_dict, 

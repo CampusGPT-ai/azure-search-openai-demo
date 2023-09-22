@@ -45,6 +45,7 @@ export function Component(): JSX.Element {
                 approach,
                 overrides: {
                     conversationId: "",
+                    isNewConversation: false,
                     promptTemplate: promptTemplate.length === 0 ? undefined : promptTemplate,
                     promptTemplatePrefix: promptTemplatePrefix.length === 0 ? undefined : promptTemplatePrefix,
                     promptTemplateSuffix: promptTemplateSuffix.length === 0 ? undefined : promptTemplateSuffix,

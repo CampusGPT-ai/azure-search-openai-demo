@@ -1,4 +1,5 @@
 import { useRef, useState, useEffect } from "react";
+import { getLocalStorage, setLocalStorage } from "../../utilities/stateManagement";
 import { v4 as uuid } from "uuid";
 import { Checkbox, Panel, DefaultButton, TextField, SpinButton, Dropdown, IDropdownOption } from "@fluentui/react";
 import { Drawer, DrawerOverlay, DrawerBody, DrawerHeader, DrawerHeaderTitle } from "@fluentui/react-components/unstable";
@@ -49,9 +50,17 @@ const Chat = () => {
     const [conversations, setConversations] = useState<ConversationsResponse | undefined>(undefined);
     const [interests, setInterests] = useState<InterestsResponse | undefined>(undefined);
 
-    const [conversationId, setConversationId] = useState<string>(uuid().toString());
+    const [isNewConversation, setIsNewConversation] = useState<boolean>(getLocalStorage<boolean>("isNewConversation") || false);
+    const [conversationId, setConversationId] = useState<string>(getLocalStorage<string>("conversationId") || uuid().toString());
+    const [activeConversation, setActiveConversation] = useState<ConversationsModel | null>(null);
 
     const makeApiRequest = async (question: string) => {
+        console.log("Asking question: " + question);
+        console.log("Conversation id: " + conversationId);
+        if (isNewConversation) console.log("Starting a new conversation...");
+
+        console.log("Making API call to OpenAI...");
+
         lastQuestionRef.current = question;
 
         error && setError(undefined);
@@ -66,6 +75,7 @@ const Chat = () => {
                 approach: Approaches.ReadRetrieveRead,
                 overrides: {
                     conversationId: conversationId,
+                    isNewConversation: isNewConversation,
                     promptTemplate: promptTemplate.length === 0 ? undefined : promptTemplate,
                     excludeCategory: excludeCategory.length === 0 ? undefined : excludeCategory,
                     top: retrieveCount,
@@ -78,6 +88,20 @@ const Chat = () => {
             const result = await chatApi(request);
             setAnswers([...answers, [question, result]]);
             setConversationId(result.conversation_id);
+
+            if (isNewConversation) {
+                console.log("Received response, including new conversation title, setting title: " + result.conversation_topic);
+                const convo: ConversationsModel = {
+                    id: conversationId,
+                    topic: result.conversation_topic,
+                    start_time: Date.now().toString(),
+                    end_time: "",
+                    interactions: []
+                };
+                conversations?.list.unshift(convo);
+                //setActiveConversation(convo);
+            }
+            setIsNewConversation(false);
         } catch (e) {
             setError(e);
         } finally {
@@ -167,6 +191,41 @@ const Chat = () => {
             setIsCitationPanelOpen(true);
         }
     };
+
+    const onConversationSelected = (conversationId: string) => {
+        console.log("Conversation selected: id=" + conversationId);
+        if (conversations != null) {
+            conversations.list.forEach(el => {
+                if (el.id == conversationId) {
+                    console.log("Found conversation with topic: " + el.topic);
+                    setActiveConversation(el);
+                    setConversationId(el.id);
+                }
+            });
+        }
+    };
+
+    useEffect(() => {
+        console.log("new active conversation detected:" + activeConversation?.id);
+        clearChat();
+        let lastQuestion = "";
+        let answers: [user: string, answer: string][] = [];
+        activeConversation?.interactions.forEach(i => {
+            lastQuestion = i.user;
+            answers.push([
+                i.user,
+                JSON.stringify({
+                    conversationId: activeConversation.id,
+                    answer: i.bot,
+                    data_points: [],
+                    follow_up: []
+                })
+            ]);
+        });
+        lastQuestionRef.current = lastQuestion;
+        setAnswers(answers.reverse().map(x => [x[0], JSON.parse(x[1])]));
+    }, [activeConversation]);
+
     const onToggleTab = (tab: AnalysisPanelTabs, index: number) => {
         if (activeAnalysisPanelTab === tab && selectedAnswer === index) {
             setActiveAnalysisPanelTab(undefined);
@@ -190,8 +249,19 @@ const Chat = () => {
     };
 
     const startNewChat = () => {
-        setConversationId("");
+        console.log("Starting new chat");
+        clearChat();
+        setIsNewConversation(true);
+        setConversationId(uuid().toString());
     };
+
+    useEffect(() => {
+        setLocalStorage<string>("conversationId", conversationId);
+    }, [conversationId]);
+
+    useEffect(() => {
+        setLocalStorage("isNewChat", isNewConversation);
+    }, [isNewConversation]);
 
     let interestList: Array<InterestModel> = [];
     if (interests?.list) interestList = interests.list;
@@ -215,7 +285,11 @@ const Chat = () => {
             <div className={styles.historyAndChatGrid}>
                 <div className={styles.contentSection}>
                     <h2>Conversation History</h2>
-                    <UserConversations conversations={conversationsList} onCitationClicked={c => onShowCitationFromHistory(c)} />
+                    <UserConversations
+                        conversations={conversationsList}
+                        onCitationClicked={c => onShowCitationFromHistory(c)}
+                        onConversationClicked={onConversationSelected}
+                    />
                 </div>
                 <div className={[styles.contentSection, styles.chatRoot].filter(item => !!item).join(" ")}>
                     <div className={styles.chatContainer}>

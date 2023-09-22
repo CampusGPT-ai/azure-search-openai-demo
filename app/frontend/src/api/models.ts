@@ -12,6 +12,7 @@ export const enum RetrievalMode {
 
 export type AskRequestOverrides = {
     conversationId: string;
+    isNewConversation: boolean;
     retrievalMode?: RetrievalMode;
     semanticRanker?: boolean;
     semanticCaptions?: boolean;
@@ -32,6 +33,7 @@ export type AskRequest = {
 
 export type AskResponse = {
     conversation_id: string;
+    conversation_topic: string;
     answer: string;
     thoughts: string | null;
     data_points: string[];
@@ -67,6 +69,7 @@ export type ChatHistoryMessageModel = {
 };
 
 export type ConversationsModel = {
+    id: string;
     topic: string;
     start_time: string;
     end_time: string;
