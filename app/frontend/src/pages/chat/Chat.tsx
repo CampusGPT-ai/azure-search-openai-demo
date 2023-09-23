@@ -1,7 +1,7 @@
 import { useRef, useState, useEffect } from "react";
 import { getLocalStorage, setLocalStorage } from "../../utilities/stateManagement";
 import { v4 as uuid } from "uuid";
-import { Checkbox, Panel, DefaultButton, TextField, SpinButton, Dropdown, IDropdownOption } from "@fluentui/react";
+import { Checkbox, Panel, DefaultButton, TextField, SpinButton, Dropdown, IDropdownOption, Stack, StackItem } from "@fluentui/react";
 import { Drawer, DrawerOverlay, DrawerBody, DrawerHeader, DrawerHeaderTitle } from "@fluentui/react-components/unstable";
 import { Dismiss24Regular } from "@fluentui/react-icons";
 import { Button } from "@fluentui/react-components";
@@ -82,7 +82,7 @@ const Chat = () => {
                     retrievalMode: retrievalMode,
                     semanticRanker: useSemanticRanker,
                     semanticCaptions: useSemanticCaptions,
-                    suggestFollowupQuestions: useSuggestFollowupQuestions
+                    suggestFollowupQuestions: true
                 }
             };
             const result = await chatApi(request);
@@ -271,10 +271,6 @@ const Chat = () => {
 
     return (
         <div className={styles.container}>
-            <div className={styles.commandsContainer}>
-                <ClearChatButton className={styles.commandButton} onClick={clearChat} disabled={!lastQuestionRef.current || isLoading} />
-                <SettingsButton className={styles.commandButton} onClick={() => setIsConfigPanelOpen(!isConfigPanelOpen)} />
-            </div>
             <div className={styles.contentSection}>
                 <h1>Your Interests</h1>
                 <InterestList list={interestList} />
@@ -282,17 +278,17 @@ const Chat = () => {
             <div className={styles.contentSection}>
                 <h1>Trending Topics</h1>
             </div>
-            <div className={styles.historyAndChatGrid}>
-                <div className={styles.contentSection}>
-                    <h2>Conversation History</h2>
-                    <UserConversations
-                        conversations={conversationsList}
-                        onCitationClicked={c => onShowCitationFromHistory(c)}
-                        onConversationClicked={onConversationSelected}
-                    />
-                </div>
-                <div className={[styles.contentSection, styles.chatRoot].filter(item => !!item).join(" ")}>
-                    <div className={styles.chatContainer}>
+            <div className={styles.chatSection}>
+                <Stack horizontal horizontalAlign="stretch">
+                    <StackItem className={styles.chatHistoryContainer} disableShrink>
+                        <UserConversations
+                            conversations={conversationsList}
+                            onCitationClicked={c => onShowCitationFromHistory(c)}
+                            onConversationClicked={onConversationSelected}
+                            onNewChatClicked={() => startNewChat()}
+                        />
+                    </StackItem>
+                    <StackItem className={styles.chatInputContainer}>
                         <h2>What's on your mind today?</h2>
                         {!lastQuestionRef.current ? (
                             <div className={styles.chatEmptyState}>
@@ -313,7 +309,7 @@ const Chat = () => {
                                                 onThoughtProcessClicked={() => onToggleTab(AnalysisPanelTabs.ThoughtProcessTab, index)}
                                                 onSupportingContentClicked={() => onToggleTab(AnalysisPanelTabs.SupportingContentTab, index)}
                                                 onFollowupQuestionClicked={q => makeApiRequest(q)}
-                                                showFollowupQuestions={useSuggestFollowupQuestions && answers.length - 1 === index}
+                                                showFollowupQuestions={answers.length - 1 === index}
                                             />
                                         </div>
                                     </div>
@@ -340,105 +336,100 @@ const Chat = () => {
 
                         <div className={styles.chatInput}>
                             <QuestionInput
-                                onNewChatClicked={() => startNewChat()}
                                 clearOnSend
                                 placeholder="Type a new question (e.g. does my plan cover annual eye exams?)"
                                 disabled={isLoading}
                                 onSend={question => makeApiRequest(question)}
                             />
-                        </div>
-                    </div>
 
-                    {answers.length > 0 && activeAnalysisPanelTab && (
-                        <AnalysisPanel
-                            className={styles.chatAnalysisPanel}
-                            activeCitation={activeCitation}
-                            onActiveTabChanged={x => onToggleTab(x, selectedAnswer)}
-                            citationHeight="810px"
-                            answer={answers[selectedAnswer][1]}
-                            activeTab={activeAnalysisPanelTab}
-                        />
-                    )}
-
-                    <DrawerOverlay
-                        className={styles.citationPanelContainer}
-                        open={isCitationPanelOpen}
-                        onOpenChange={(_, { open }) => onDrawerClose(open)}
-                        size="large"
-                        position="end"
-                    >
-                        <DrawerHeader className={styles.citationPanelHeader}>
-                            <DrawerHeaderTitle
-                                className={styles.citationPanelHeaderTitle}
-                                action={<Button appearance="subtle" aria-label="Close" icon={<Dismiss24Regular />} onClick={() => onDrawerClose(false)} />}
+                            <DrawerOverlay
+                                className={styles.citationPanelContainer}
+                                open={isCitationPanelOpen}
+                                onOpenChange={(_, { open }) => onDrawerClose(open)}
+                                size="large"
+                                position="end"
                             >
-                                Citation source
-                            </DrawerHeaderTitle>
-                        </DrawerHeader>
-                        <DrawerBody>
-                            <iframe title="Citation" src={activeCitation} width="100%" height="810px" />
-                        </DrawerBody>
-                    </DrawerOverlay>
+                                <DrawerHeader className={styles.citationPanelHeader}>
+                                    <DrawerHeaderTitle
+                                        className={styles.citationPanelHeaderTitle}
+                                        action={
+                                            <Button appearance="subtle" aria-label="Close" icon={<Dismiss24Regular />} onClick={() => onDrawerClose(false)} />
+                                        }
+                                    >
+                                        Citation source
+                                    </DrawerHeaderTitle>
+                                </DrawerHeader>
+                                <DrawerBody>
+                                    <iframe title="Citation" src={activeCitation} width="100%" height="810px" />
+                                </DrawerBody>
+                            </DrawerOverlay>
 
-                    <Panel
-                        headerText="Configure answer generation"
-                        isOpen={isConfigPanelOpen}
-                        isBlocking={false}
-                        onDismiss={() => setIsConfigPanelOpen(false)}
-                        closeButtonAriaLabel="Close"
-                        onRenderFooterContent={() => <DefaultButton onClick={() => setIsConfigPanelOpen(false)}>Close</DefaultButton>}
-                        isFooterAtBottom={true}
-                    >
-                        <TextField
-                            className={styles.chatSettingsSeparator}
-                            defaultValue={promptTemplate}
-                            label="Override prompt template"
-                            multiline
-                            autoAdjustHeight
-                            onChange={onPromptTemplateChange}
-                        />
+                            <Panel
+                                headerText="Configure answer generation"
+                                isOpen={isConfigPanelOpen}
+                                isBlocking={false}
+                                onDismiss={() => setIsConfigPanelOpen(false)}
+                                closeButtonAriaLabel="Close"
+                                onRenderFooterContent={() => <DefaultButton onClick={() => setIsConfigPanelOpen(false)}>Close</DefaultButton>}
+                                isFooterAtBottom={true}
+                            >
+                                <TextField
+                                    className={styles.chatSettingsSeparator}
+                                    defaultValue={promptTemplate}
+                                    label="Override prompt template"
+                                    multiline
+                                    autoAdjustHeight
+                                    onChange={onPromptTemplateChange}
+                                />
 
-                        <SpinButton
-                            className={styles.chatSettingsSeparator}
-                            label="Retrieve this many documents from search:"
-                            min={1}
-                            max={50}
-                            defaultValue={retrieveCount.toString()}
-                            onChange={onRetrieveCountChange}
-                        />
-                        <TextField className={styles.chatSettingsSeparator} label="Exclude category" onChange={onExcludeCategoryChanged} />
-                        <Checkbox
-                            className={styles.chatSettingsSeparator}
-                            checked={useSemanticRanker}
-                            label="Use semantic ranker for retrieval"
-                            onChange={onUseSemanticRankerChange}
-                        />
-                        <Checkbox
-                            className={styles.chatSettingsSeparator}
-                            checked={useSemanticCaptions}
-                            label="Use query-contextual summaries instead of whole documents"
-                            onChange={onUseSemanticCaptionsChange}
-                            disabled={!useSemanticRanker}
-                        />
-                        <Checkbox
-                            className={styles.chatSettingsSeparator}
-                            checked={useSuggestFollowupQuestions}
-                            label="Suggest follow-up questions"
-                            onChange={onUseSuggestFollowupQuestionsChange}
-                        />
-                        <Dropdown
-                            className={styles.chatSettingsSeparator}
-                            label="Retrieval mode"
-                            options={[
-                                { key: "hybrid", text: "Vectors + Text (Hybrid)", selected: retrievalMode == RetrievalMode.Hybrid, data: RetrievalMode.Hybrid },
-                                { key: "vectors", text: "Vectors", selected: retrievalMode == RetrievalMode.Vectors, data: RetrievalMode.Vectors },
-                                { key: "text", text: "Text", selected: retrievalMode == RetrievalMode.Text, data: RetrievalMode.Text }
-                            ]}
-                            required
-                            onChange={onRetrievalModeChange}
-                        />
-                    </Panel>
-                </div>
+                                <SpinButton
+                                    className={styles.chatSettingsSeparator}
+                                    label="Retrieve this many documents from search:"
+                                    min={1}
+                                    max={50}
+                                    defaultValue={retrieveCount.toString()}
+                                    onChange={onRetrieveCountChange}
+                                />
+                                <TextField className={styles.chatSettingsSeparator} label="Exclude category" onChange={onExcludeCategoryChanged} />
+                                <Checkbox
+                                    className={styles.chatSettingsSeparator}
+                                    checked={useSemanticRanker}
+                                    label="Use semantic ranker for retrieval"
+                                    onChange={onUseSemanticRankerChange}
+                                />
+                                <Checkbox
+                                    className={styles.chatSettingsSeparator}
+                                    checked={useSemanticCaptions}
+                                    label="Use query-contextual summaries instead of whole documents"
+                                    onChange={onUseSemanticCaptionsChange}
+                                    disabled={!useSemanticRanker}
+                                />
+                                <Checkbox
+                                    className={styles.chatSettingsSeparator}
+                                    checked={useSuggestFollowupQuestions}
+                                    label="Suggest follow-up questions"
+                                    onChange={onUseSuggestFollowupQuestionsChange}
+                                />
+                                <Dropdown
+                                    className={styles.chatSettingsSeparator}
+                                    label="Retrieval mode"
+                                    options={[
+                                        {
+                                            key: "hybrid",
+                                            text: "Vectors + Text (Hybrid)",
+                                            selected: retrievalMode == RetrievalMode.Hybrid,
+                                            data: RetrievalMode.Hybrid
+                                        },
+                                        { key: "vectors", text: "Vectors", selected: retrievalMode == RetrievalMode.Vectors, data: RetrievalMode.Vectors },
+                                        { key: "text", text: "Text", selected: retrievalMode == RetrievalMode.Text, data: RetrievalMode.Text }
+                                    ]}
+                                    required
+                                    onChange={onRetrievalModeChange}
+                                />
+                            </Panel>
+                        </div>
+                    </StackItem>
+                </Stack>
             </div>
         </div>
     );

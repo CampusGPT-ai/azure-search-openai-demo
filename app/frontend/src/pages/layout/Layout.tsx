@@ -1,7 +1,7 @@
 import { Outlet, NavLink, Link } from "react-router-dom";
 import { Persona } from "@fluentui/react-components";
 
-import github from "../../assets/github.svg";
+import avatar from "../../assets/reinhold.png";
 
 import styles from "./Layout.module.css";
 
@@ -63,12 +63,13 @@ const Layout = () => {
                             </ul>
                         </nav>
                         <Persona
+                            className={styles.avatar}
                             textAlignment="center"
                             size="large"
                             name="Reinhold Staudinger"
                             avatar={{
                                 image: {
-                                    src: github
+                                    src: avatar
                                 }
                             }}
                         />

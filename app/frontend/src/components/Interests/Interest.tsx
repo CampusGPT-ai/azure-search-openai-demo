@@ -11,9 +11,5 @@ interface Props {
 
 export const Interest = ({ text, selected }: Props) => {
     const [checked, setChecked] = useState<CheckboxProps["checked"]>(selected);
-    return (
-        <div className={styles.interestContainer}>
-            <Checkbox checked={checked} onChange={(ev, data) => setChecked(data.checked)} label={text} />
-        </div>
-    );
+    return <Checkbox checked={checked} onChange={(ev, data) => setChecked(data.checked)} label={text} />;
 };

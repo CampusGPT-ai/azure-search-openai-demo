@@ -3,17 +3,15 @@ import { Stack, TextField } from "@fluentui/react";
 import { Send28Filled } from "@fluentui/react-icons";
 
 import styles from "./QuestionInput.module.css";
-import { Button } from "@fluentui/react-components";
 
 interface Props {
     onSend: (question: string) => void;
     disabled: boolean;
     placeholder?: string;
     clearOnSend?: boolean;
-    onNewChatClicked: () => void;
 }
 
-export const QuestionInput = ({ onSend, disabled, placeholder, clearOnSend, onNewChatClicked }: Props) => {
+export const QuestionInput = ({ onSend, disabled, placeholder, clearOnSend }: Props) => {
     const [question, setQuestion] = useState<string>("");
 
     const sendQuestion = () => {
@@ -65,11 +63,6 @@ export const QuestionInput = ({ onSend, disabled, placeholder, clearOnSend, onNe
                 >
                     <Send28Filled primaryFill="rgba(115, 118, 225, 1)" />
                 </div>
-            </div>
-            <div className={styles.questionInputButtonsContainer}>
-                <Button shape="circular" size="small" onClick={onNewChatClicked}>
-                    New Chat
-                </Button>
             </div>
         </Stack>
     );

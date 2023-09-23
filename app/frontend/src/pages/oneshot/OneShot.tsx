@@ -147,7 +147,6 @@ export function Component(): JSX.Element {
                         placeholder="Example: Does my plan cover annual eye exams?"
                         disabled={isLoading}
                         onSend={question => makeApiRequest(question)}
-                        onNewChatClicked={() => {}}
                     />
                 </div>
             </div>
