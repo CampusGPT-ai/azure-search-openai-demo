@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Stack, IconButton } from "@fluentui/react";
+import { Stack } from "@fluentui/react";
 import DOMPurify from "dompurify";
 
 import styles from "./Answer.module.css";
@@ -36,24 +36,6 @@ export const Answer = ({
             <Stack.Item>
                 <Stack horizontal horizontalAlign="space-between">
                     <AnswerIcon />
-                    <div>
-                        <IconButton
-                            style={{ color: "black" }}
-                            iconProps={{ iconName: "Lightbulb" }}
-                            title="Show thought process"
-                            ariaLabel="Show thought process"
-                            onClick={() => onThoughtProcessClicked()}
-                            disabled={!answer.thoughts}
-                        />
-                        <IconButton
-                            style={{ color: "black" }}
-                            iconProps={{ iconName: "ClipboardList" }}
-                            title="Show supporting content"
-                            ariaLabel="Show supporting content"
-                            onClick={() => onSupportingContentClicked()}
-                            disabled={!answer.data_points.length}
-                        />
-                    </div>
                 </Stack>
             </Stack.Item>
 

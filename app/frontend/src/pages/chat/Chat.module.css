@@ -10,12 +10,30 @@
     display: flex;
 }
 
-.chatContainer {
+.chatInputContainer {
     flex: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
     width: 100%;
+}
+
+.chatHistoryContainer {
+    background-color: #0094b25f;
+    color: #454444;
+    width: 20rem;
+    border-top-left-radius: 6px;
+    border-bottom-left-radius: 6px;
+    background: linear-gradient(105deg, #0093b272 46%, #0093b233 100%);
+}
+
+.chatSection {
+    border-radius: 6px;
+    background: #0094b22f;
+    box-shadow:
+        4px 4px 8px rgba(0, 0, 0, 0.14),
+        0px 0px 4px rgba(0, 0, 0, 0.12);
+    margin: 16px;
 }
 
 .chatEmptyState {
@@ -53,13 +71,14 @@
 .chatMessageStream {
     flex-grow: 1;
     max-height: 1024px;
-    max-width: 1028px;
     width: 100%;
-    overflow-y: auto;
     padding-left: 24px;
     padding-right: 24px;
     display: flex;
     flex-direction: column;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    overflow-anchor: auto;
 }
 
 .chatMessageGpt {
@@ -83,7 +102,7 @@
     padding-left: 24px;
     padding-right: 24px;
     width: 100%;
-    max-width: 1028px;
+    background-color: #0094b22f;
 }
 
 .chatAnalysisPanel {
@@ -112,24 +131,19 @@
     margin-bottom: 20px;
 }
 
-.historyAndChatGrid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-gap: 20px;
-}
-
 .contentSection {
     border-radius: 6px;
-    background: #d5003212;
+
+    background: #0094b22f;
     box-shadow:
-        0px 2px 4px rgba(0, 0, 0, 0.14),
-        0px 0px 2px rgba(0, 0, 0, 0.12);
+        4px 4px 8px rgba(0, 0, 0, 0.14),
+        0px 0px 4px rgba(0, 0, 0, 0.12);
     padding: 12px;
     margin: 16px;
 }
 
 .citationPanelHeader {
-    background: #d50032;
+    background: #0093b2;
 }
 
 .citationPanelHeaderTitle {

@@ -1,0 +1,48 @@
+.convoMenuHeader {
+    border-top-left-radius: 6px;
+    background: rgb(0, 147, 178);
+    background: linear-gradient(90deg, rgba(0, 147, 178, 1) 46%, rgba(107, 185, 201, 1) 100%);
+    color: lightgrey;
+}
+
+.convoActionContainer {
+    display: flex;
+    width: 100%;
+    margin: 16px;
+}
+
+.convoHeaderContainer {
+    display: flex;
+    width: 13.7rem;
+    margin-left: 16px;
+}
+
+.convoSelected {
+    background-color: #0094b2a3;
+    color: rgb(31, 31, 31);
+}
+
+.convoHovered {
+    background: radial-gradient(circle, rgba(0, 147, 178, 0.16992734593837533) 0%, rgba(0, 147, 178, 0.5536808473389356) 100%);
+}
+
+.convoUnhovered {
+    background-color: transparent;
+}
+
+.convoTable {
+    width: 100%;
+}
+
+.convoMenuItem {
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+
+.convoMenuIconPadding {
+    padding-left: 12px;
+}
+
+.labelPadding {
+    padding-left: 8px;
+}

@@ -1,5 +1,7 @@
 import { useRef, useState, useEffect } from "react";
-import { Checkbox, Panel, DefaultButton, TextField, SpinButton, Dropdown, IDropdownOption } from "@fluentui/react";
+import { getLocalStorage, setLocalStorage } from "../../utilities/stateManagement";
+import { v4 as uuid } from "uuid";
+import { Checkbox, Panel, DefaultButton, TextField, SpinButton, Dropdown, IDropdownOption, Stack, StackItem } from "@fluentui/react";
 import { Drawer, DrawerOverlay, DrawerBody, DrawerHeader, DrawerHeaderTitle } from "@fluentui/react-components/unstable";
 import { Dismiss24Regular } from "@fluentui/react-icons";
 import { Button } from "@fluentui/react-components";
@@ -13,13 +15,14 @@ import { AnalysisPanel, AnalysisPanelTabs } from "../../components/AnalysisPanel
 import { SettingsButton } from "../../components/SettingsButton";
 import { ClearChatButton } from "../../components/ClearChatButton";
 import { UserChatHistory } from "../../components/UserChatHistory/UserChatHistory";
-import { ChatHistoryResponse, ChatHistoryMessageModel } from "../../api";
-import { chatHistoryApi } from "../../api";
+import { ConversationsResponse, ConversationsModel, ChatHistoryMessageModel } from "../../api";
+import { conversationsApi } from "../../api";
 import { interestsAllApi } from "../../api";
 import { InterestsResponse, InterestModel } from "../../api";
 
 import styles from "./Chat.module.css";
 import { InterestList } from "../../components/Interests/InterestList";
+import { UserConversations } from "../../components/UserChatHistory/UserConversations";
 
 const Chat = () => {
     const [isConfigPanelOpen, setIsConfigPanelOpen] = useState(false);
@@ -44,10 +47,20 @@ const Chat = () => {
     const [selectedAnswer, setSelectedAnswer] = useState<number>(0);
     const [answers, setAnswers] = useState<[user: string, response: AskResponse][]>([]);
 
-    const [chatHistory, setChatHistory] = useState<ChatHistoryResponse | undefined>(undefined);
+    const [conversations, setConversations] = useState<ConversationsResponse | undefined>(undefined);
     const [interests, setInterests] = useState<InterestsResponse | undefined>(undefined);
 
+    const [isNewConversation, setIsNewConversation] = useState<boolean>(getLocalStorage<boolean>("isNewConversation") || false);
+    const [conversationId, setConversationId] = useState<string>(getLocalStorage<string>("conversationId") || uuid().toString());
+    const [activeConversation, setActiveConversation] = useState<ConversationsModel | null>(null);
+
     const makeApiRequest = async (question: string) => {
+        console.log("Asking question: " + question);
+        console.log("Conversation id: " + conversationId);
+        if (isNewConversation) console.log("Starting a new conversation...");
+
+        console.log("Making API call to OpenAI...");
+
         lastQuestionRef.current = question;
 
         error && setError(undefined);
@@ -61,17 +74,34 @@ const Chat = () => {
                 history: [...history, { user: question, bot: undefined }],
                 approach: Approaches.ReadRetrieveRead,
                 overrides: {
+                    conversationId: conversationId,
+                    isNewConversation: isNewConversation,
                     promptTemplate: promptTemplate.length === 0 ? undefined : promptTemplate,
                     excludeCategory: excludeCategory.length === 0 ? undefined : excludeCategory,
                     top: retrieveCount,
                     retrievalMode: retrievalMode,
                     semanticRanker: useSemanticRanker,
                     semanticCaptions: useSemanticCaptions,
-                    suggestFollowupQuestions: useSuggestFollowupQuestions
+                    suggestFollowupQuestions: true
                 }
             };
             const result = await chatApi(request);
             setAnswers([...answers, [question, result]]);
+            setConversationId(result.conversation_id);
+
+            if (isNewConversation) {
+                console.log("Received response, including new conversation title, setting title: " + result.conversation_topic);
+                const convo: ConversationsModel = {
+                    id: conversationId,
+                    topic: result.conversation_topic,
+                    start_time: Date.now().toString(),
+                    end_time: "",
+                    interactions: []
+                };
+                conversations?.list.unshift(convo);
+                //setActiveConversation(convo);
+            }
+            setIsNewConversation(false);
         } catch (e) {
             setError(e);
         } finally {
@@ -79,11 +109,11 @@ const Chat = () => {
         }
     };
 
-    const makeHistoryApiRequest = async () => {
+    const makeConversationsApiRequest = async () => {
         setIsLoading(true);
         try {
-            const result = await chatHistoryApi();
-            setChatHistory(result);
+            const result = await conversationsApi();
+            setConversations(result);
         } catch (e) {
             setError(e);
         } finally {
@@ -92,13 +122,10 @@ const Chat = () => {
     };
 
     useEffect(() => {
-        makeHistoryApiRequest();
+        makeConversationsApiRequest();
         makeInterestApiRequest();
         chatMessageStreamEnd.current?.scrollIntoView({ behavior: "smooth" }), [isLoading];
     }, []);
-
-    let chatHistoryMessages: Array<ChatHistoryMessageModel> = [];
-    if (chatHistory?.list) chatHistoryMessages = chatHistory.list;
 
     const clearChat = () => {
         lastQuestionRef.current = "";
@@ -164,6 +191,41 @@ const Chat = () => {
             setIsCitationPanelOpen(true);
         }
     };
+
+    const onConversationSelected = (conversationId: string) => {
+        console.log("Conversation selected: id=" + conversationId);
+        if (conversations != null) {
+            conversations.list.forEach(el => {
+                if (el.id == conversationId) {
+                    console.log("Found conversation with topic: " + el.topic);
+                    setActiveConversation(el);
+                    setConversationId(el.id);
+                }
+            });
+        }
+    };
+
+    useEffect(() => {
+        console.log("new active conversation detected:" + activeConversation?.id);
+        clearChat();
+        let lastQuestion = "";
+        let answers: [user: string, answer: string][] = [];
+        activeConversation?.interactions.forEach(i => {
+            lastQuestion = i.user;
+            answers.push([
+                i.user,
+                JSON.stringify({
+                    conversationId: activeConversation.id,
+                    answer: i.bot,
+                    data_points: [],
+                    follow_up: []
+                })
+            ]);
+        });
+        lastQuestionRef.current = lastQuestion;
+        setAnswers(answers.reverse().map(x => [x[0], JSON.parse(x[1])]));
+    }, [activeConversation]);
+
     const onToggleTab = (tab: AnalysisPanelTabs, index: number) => {
         if (activeAnalysisPanelTab === tab && selectedAnswer === index) {
             setActiveAnalysisPanelTab(undefined);
@@ -186,15 +248,29 @@ const Chat = () => {
         }
     };
 
+    const startNewChat = () => {
+        console.log("Starting new chat");
+        clearChat();
+        setIsNewConversation(true);
+        setConversationId(uuid().toString());
+    };
+
+    useEffect(() => {
+        setLocalStorage<string>("conversationId", conversationId);
+    }, [conversationId]);
+
+    useEffect(() => {
+        setLocalStorage("isNewChat", isNewConversation);
+    }, [isNewConversation]);
+
     let interestList: Array<InterestModel> = [];
     if (interests?.list) interestList = interests.list;
 
+    let conversationsList: Array<ConversationsModel> = [];
+    if (conversations?.list) conversationsList = conversations.list;
+
     return (
         <div className={styles.container}>
-            <div className={styles.commandsContainer}>
-                <ClearChatButton className={styles.commandButton} onClick={clearChat} disabled={!lastQuestionRef.current || isLoading} />
-                <SettingsButton className={styles.commandButton} onClick={() => setIsConfigPanelOpen(!isConfigPanelOpen)} />
-            </div>
             <div className={styles.contentSection}>
                 <h1>Your Interests</h1>
                 <InterestList list={interestList} />
@@ -202,13 +278,17 @@ const Chat = () => {
             <div className={styles.contentSection}>
                 <h1>Trending Topics</h1>
             </div>
-            <div className={styles.historyAndChatGrid}>
-                <div className={styles.contentSection}>
-                    <h2>Chat History</h2>
-                    <UserChatHistory history={chatHistoryMessages} onCitationClicked={c => onShowCitationFromHistory(c)} />
-                </div>
-                <div className={[styles.contentSection, styles.chatRoot].filter(item => !!item).join(" ")}>
-                    <div className={styles.chatContainer}>
+            <div className={styles.chatSection}>
+                <Stack horizontal horizontalAlign="stretch">
+                    <StackItem className={styles.chatHistoryContainer} disableShrink>
+                        <UserConversations
+                            conversations={conversationsList}
+                            onCitationClicked={c => onShowCitationFromHistory(c)}
+                            onConversationClicked={onConversationSelected}
+                            onNewChatClicked={() => startNewChat()}
+                        />
+                    </StackItem>
+                    <StackItem className={styles.chatInputContainer}>
                         <h2>What's on your mind today?</h2>
                         {!lastQuestionRef.current ? (
                             <div className={styles.chatEmptyState}>
@@ -229,7 +309,7 @@ const Chat = () => {
                                                 onThoughtProcessClicked={() => onToggleTab(AnalysisPanelTabs.ThoughtProcessTab, index)}
                                                 onSupportingContentClicked={() => onToggleTab(AnalysisPanelTabs.SupportingContentTab, index)}
                                                 onFollowupQuestionClicked={q => makeApiRequest(q)}
-                                                showFollowupQuestions={useSuggestFollowupQuestions && answers.length - 1 === index}
+                                                showFollowupQuestions={answers.length - 1 === index}
                                             />
                                         </div>
                                     </div>
@@ -261,99 +341,95 @@ const Chat = () => {
                                 disabled={isLoading}
                                 onSend={question => makeApiRequest(question)}
                             />
-                        </div>
-                    </div>
 
-                    {answers.length > 0 && activeAnalysisPanelTab && (
-                        <AnalysisPanel
-                            className={styles.chatAnalysisPanel}
-                            activeCitation={activeCitation}
-                            onActiveTabChanged={x => onToggleTab(x, selectedAnswer)}
-                            citationHeight="810px"
-                            answer={answers[selectedAnswer][1]}
-                            activeTab={activeAnalysisPanelTab}
-                        />
-                    )}
-
-                    <DrawerOverlay
-                        className={styles.citationPanelContainer}
-                        open={isCitationPanelOpen}
-                        onOpenChange={(_, { open }) => onDrawerClose(open)}
-                        size="large"
-                        position="end"
-                    >
-                        <DrawerHeader className={styles.citationPanelHeader}>
-                            <DrawerHeaderTitle
-                                className={styles.citationPanelHeaderTitle}
-                                action={<Button appearance="subtle" aria-label="Close" icon={<Dismiss24Regular />} onClick={() => onDrawerClose(false)} />}
+                            <DrawerOverlay
+                                className={styles.citationPanelContainer}
+                                open={isCitationPanelOpen}
+                                onOpenChange={(_, { open }) => onDrawerClose(open)}
+                                size="large"
+                                position="end"
                             >
-                                Citation source
-                            </DrawerHeaderTitle>
-                        </DrawerHeader>
-                        <DrawerBody>
-                            <iframe title="Citation" src={activeCitation} width="100%" height="810px" />
-                        </DrawerBody>
-                    </DrawerOverlay>
+                                <DrawerHeader className={styles.citationPanelHeader}>
+                                    <DrawerHeaderTitle
+                                        className={styles.citationPanelHeaderTitle}
+                                        action={
+                                            <Button appearance="subtle" aria-label="Close" icon={<Dismiss24Regular />} onClick={() => onDrawerClose(false)} />
+                                        }
+                                    >
+                                        Citation source
+                                    </DrawerHeaderTitle>
+                                </DrawerHeader>
+                                <DrawerBody>
+                                    <iframe title="Citation" src={activeCitation} width="100%" height="810px" />
+                                </DrawerBody>
+                            </DrawerOverlay>
 
-                    <Panel
-                        headerText="Configure answer generation"
-                        isOpen={isConfigPanelOpen}
-                        isBlocking={false}
-                        onDismiss={() => setIsConfigPanelOpen(false)}
-                        closeButtonAriaLabel="Close"
-                        onRenderFooterContent={() => <DefaultButton onClick={() => setIsConfigPanelOpen(false)}>Close</DefaultButton>}
-                        isFooterAtBottom={true}
-                    >
-                        <TextField
-                            className={styles.chatSettingsSeparator}
-                            defaultValue={promptTemplate}
-                            label="Override prompt template"
-                            multiline
-                            autoAdjustHeight
-                            onChange={onPromptTemplateChange}
-                        />
+                            <Panel
+                                headerText="Configure answer generation"
+                                isOpen={isConfigPanelOpen}
+                                isBlocking={false}
+                                onDismiss={() => setIsConfigPanelOpen(false)}
+                                closeButtonAriaLabel="Close"
+                                onRenderFooterContent={() => <DefaultButton onClick={() => setIsConfigPanelOpen(false)}>Close</DefaultButton>}
+                                isFooterAtBottom={true}
+                            >
+                                <TextField
+                                    className={styles.chatSettingsSeparator}
+                                    defaultValue={promptTemplate}
+                                    label="Override prompt template"
+                                    multiline
+                                    autoAdjustHeight
+                                    onChange={onPromptTemplateChange}
+                                />
 
-                        <SpinButton
-                            className={styles.chatSettingsSeparator}
-                            label="Retrieve this many documents from search:"
-                            min={1}
-                            max={50}
-                            defaultValue={retrieveCount.toString()}
-                            onChange={onRetrieveCountChange}
-                        />
-                        <TextField className={styles.chatSettingsSeparator} label="Exclude category" onChange={onExcludeCategoryChanged} />
-                        <Checkbox
-                            className={styles.chatSettingsSeparator}
-                            checked={useSemanticRanker}
-                            label="Use semantic ranker for retrieval"
-                            onChange={onUseSemanticRankerChange}
-                        />
-                        <Checkbox
-                            className={styles.chatSettingsSeparator}
-                            checked={useSemanticCaptions}
-                            label="Use query-contextual summaries instead of whole documents"
-                            onChange={onUseSemanticCaptionsChange}
-                            disabled={!useSemanticRanker}
-                        />
-                        <Checkbox
-                            className={styles.chatSettingsSeparator}
-                            checked={useSuggestFollowupQuestions}
-                            label="Suggest follow-up questions"
-                            onChange={onUseSuggestFollowupQuestionsChange}
-                        />
-                        <Dropdown
-                            className={styles.chatSettingsSeparator}
-                            label="Retrieval mode"
-                            options={[
-                                { key: "hybrid", text: "Vectors + Text (Hybrid)", selected: retrievalMode == RetrievalMode.Hybrid, data: RetrievalMode.Hybrid },
-                                { key: "vectors", text: "Vectors", selected: retrievalMode == RetrievalMode.Vectors, data: RetrievalMode.Vectors },
-                                { key: "text", text: "Text", selected: retrievalMode == RetrievalMode.Text, data: RetrievalMode.Text }
-                            ]}
-                            required
-                            onChange={onRetrievalModeChange}
-                        />
-                    </Panel>
-                </div>
+                                <SpinButton
+                                    className={styles.chatSettingsSeparator}
+                                    label="Retrieve this many documents from search:"
+                                    min={1}
+                                    max={50}
+                                    defaultValue={retrieveCount.toString()}
+                                    onChange={onRetrieveCountChange}
+                                />
+                                <TextField className={styles.chatSettingsSeparator} label="Exclude category" onChange={onExcludeCategoryChanged} />
+                                <Checkbox
+                                    className={styles.chatSettingsSeparator}
+                                    checked={useSemanticRanker}
+                                    label="Use semantic ranker for retrieval"
+                                    onChange={onUseSemanticRankerChange}
+                                />
+                                <Checkbox
+                                    className={styles.chatSettingsSeparator}
+                                    checked={useSemanticCaptions}
+                                    label="Use query-contextual summaries instead of whole documents"
+                                    onChange={onUseSemanticCaptionsChange}
+                                    disabled={!useSemanticRanker}
+                                />
+                                <Checkbox
+                                    className={styles.chatSettingsSeparator}
+                                    checked={useSuggestFollowupQuestions}
+                                    label="Suggest follow-up questions"
+                                    onChange={onUseSuggestFollowupQuestionsChange}
+                                />
+                                <Dropdown
+                                    className={styles.chatSettingsSeparator}
+                                    label="Retrieval mode"
+                                    options={[
+                                        {
+                                            key: "hybrid",
+                                            text: "Vectors + Text (Hybrid)",
+                                            selected: retrievalMode == RetrievalMode.Hybrid,
+                                            data: RetrievalMode.Hybrid
+                                        },
+                                        { key: "vectors", text: "Vectors", selected: retrievalMode == RetrievalMode.Vectors, data: RetrievalMode.Vectors },
+                                        { key: "text", text: "Text", selected: retrievalMode == RetrievalMode.Text, data: RetrievalMode.Text }
+                                    ]}
+                                    required
+                                    onChange={onRetrievalModeChange}
+                                />
+                            </Panel>
+                        </div>
+                    </StackItem>
+                </Stack>
             </div>
         </div>
     );

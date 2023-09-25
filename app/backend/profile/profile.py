@@ -29,18 +29,18 @@ class Profile:
         self.interests = interests
 
     @classmethod
-    def configure(self, host, database, master_key):
-        Profile._cosmos_client = cosmos_client.CosmosClient(host, {'masterKey': master_key})
-        Profile._cosmos_db = Profile._cosmos_client.create_database_if_not_exists(id=database)
-        Profile._cosmos_container = Profile._cosmos_db.create_container_if_not_exists(id=CONTAINER_ID, partition_key=PartitionKey(path='/id', kind='Hash'))
+    def configure(cls, host, database, master_key):
+        cls._cosmos_client = cosmos_client.CosmosClient(host, {'masterKey': master_key})
+        cls._cosmos_db = cls._cosmos_client.create_database_if_not_exists(id=database)
+        cls._cosmos_container = cls._cosmos_db.create_container_if_not_exists(id=CONTAINER_ID, partition_key=PartitionKey(path='/id', kind='Hash'))
 
     @classmethod
     def create_if_not_exists(cls, user_id, institution_id):
         # first see if we can load by the user_id, if not create a new one
         # this is a workaround since unique indexes are not working
-        profile = Profile.load_by_user_id(user_id)
+        profile = cls.load_by_user_id(user_id)
         if profile is None:
-            profile = Profile(str(uuid.uuid4()), user_id, institution_id, None, None, None, None, [])
+            profile = cls(str(uuid.uuid4()), user_id, institution_id, None, None, None, None, [])
         return profile
     
 
@@ -48,7 +48,7 @@ class Profile:
     def load_by_id(cls, id):
         p = None
         try:
-            p = Profile._cosmos_container.read_item(item=id, partition_key=id)
+            p = cls._cosmos_container.read_item(item=id, partition_key=id)
         except exceptions.CosmosResourceNotFoundError:
             # leave profile as none
             p = None
@@ -66,7 +66,7 @@ class Profile:
 
     @classmethod
     def load_by_user_id(cls, user_id):
-        results = Profile._cosmos_container.query_items(
+        results = cls._cosmos_container.query_items(
             query="SELECT * FROM profiles WHERE profiles.user_id=@id",
             parameters=[
                 {"name": "@id", "value": user_id}
@@ -98,8 +98,4 @@ class Profile:
             raise Exception(msg)
         
         Profile._cosmos_container.upsert_item(self.__dict__)
-
-    #def delete(self):
-    #  Profile._cosmos_container.delete_item(item=self.id, partition_key="/id")
-       
 
