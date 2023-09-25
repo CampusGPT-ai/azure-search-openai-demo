@@ -177,7 +177,7 @@ async def setup_clients():
     search_client = SearchClient(
         endpoint=f"https://{AZURE_SEARCH_SERVICE}.search.windows.net",
         index_name=AZURE_SEARCH_INDEX,
-        credential=AzureKeyCredential("UjyJz7CV76kDI1w8ub6IhIQqNtQ4e1a106jXAWhkbSAzSeC9dStf"))
+        credential=AzureKeyCredential("HshGK5tUYkZY2UIkXDvWhPOGX6xUhAuEqWykoYP1OXAzSeCdxLG1"))
     blob_client = BlobServiceClient(
         account_url=f"https://{AZURE_STORAGE_ACCOUNT}.blob.core.windows.net",
         credential=AzureSasCredential("?sv=2022-11-02&ss=bfqt&srt=sco&sp=rwdlacupyx&se=2025-01-02T00:31:31Z&st=2023-09-13T16:31:31Z&spr=https&sig=bEtJcUhkuwNxscObZP0W7mvOs4XKzL1Jtw5SyfO7oMw%3D"))
