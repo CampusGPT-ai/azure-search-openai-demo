@@ -1,8 +1,4 @@
 .profileContainer {
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: left;
     margin: 16px;
 }
 
@@ -11,4 +7,13 @@
     font-weight: 600;
     margin-top: 0;
     margin-bottom: 10px;
+}
+
+.allProfilesContainer {
+    width: 100%;
+    text-align: center;
+}
+
+.loginButtonContainer {
+    margin-top: 30px;
 }

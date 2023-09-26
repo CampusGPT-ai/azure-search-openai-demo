@@ -1,7 +1,7 @@
 import { Outlet, NavLink, Link } from "react-router-dom";
 import { Persona } from "@fluentui/react-components";
 
-import avatar from "../../assets/reinhold.png";
+import avatar from "../../assets/avatars/reinhold.png";
 
 import styles from "./Layout.module.css";
 
