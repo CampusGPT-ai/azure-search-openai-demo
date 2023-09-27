@@ -4,11 +4,7 @@ import { Image } from "@fluentui/react-components";
 import { Subtitle2, Title2 } from "@fluentui/react-components";
 
 import styles from "./DemoProfile.module.css";
-
-interface Props {
-    profile: Profile;
-    onSelectProfile: (id: string, el: HTMLDivElement) => void;
-}
+import { ProfileModel } from "../../api";
 
 export interface Profile {
     id: string;
@@ -18,9 +14,16 @@ export interface Profile {
     interests: Array<string>;
     demographics: Map<string, string>;
     academics: Map<string, string>;
+    courses: Array<string>;
 }
 
-export const DemoProfile = ({ profile: { id, user_id, full_name, avatar, interests, demographics, academics }, onSelectProfile }: Props) => {
+interface Props {
+    name: string;
+    profile: Profile;
+    onSelectProfile: (id: string, el: HTMLDivElement) => void;
+}
+
+export const DemoProfile = ({ name, profile: { id, user_id, full_name, avatar, interests, demographics, academics, courses }, onSelectProfile }: Props) => {
     let demoStr: string = "";
     demographics.forEach((value, key, map) => {
         if (demoStr.length > 0) {

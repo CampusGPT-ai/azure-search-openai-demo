@@ -24,6 +24,8 @@ from quart import (
     request,
     send_file,
     send_from_directory,
+    redirect,
+    session
 )
 
 from approaches.chatreadretrieveread import ChatReadRetrieveReadApproach
@@ -32,6 +34,7 @@ from approaches.readretrieveread import ReadRetrieveReadApproach
 from approaches.retrievethenread import RetrieveThenReadApproach
 from profile.interest import Interest
 from profile.profile import Profile
+from profile.profile_loader import ProfileLoader
 from profile.institution import Institution
 from profile.chathistory import ChatHistory
 from profile.conversation import Conversation
@@ -122,8 +125,8 @@ async def get_all_interests() :
 
 @bp.route("/conversations", methods=["GET"])
 async def get_conversations():
-    user = current_app.config[CONFIG_CURRENT_USER]
-    convos = Conversation.load_by_user(user.user_id)
+    profile_id = session[CONFIG_CURRENT_USER]
+    convos = Conversation.load_by_user(profile_id)
     rv = []
     for convo in convos:
         json = convo.to_json()
@@ -135,6 +138,37 @@ async def get_conversations():
 
     return jsonify({"list": rv})
 
+@bp.route("/demo_login", methods=["POST"], )
+async def demoLogin():  
+    if request.method == "POST":
+        profile_id = (await request.form)["profile_id"]
+        profile = Profile.load_by_id(profile_id)
+        session[CONFIG_CURRENT_USER] = profile.id
+        if profile is None:
+            return "Error: User not found", 404
+        
+        response = redirect("/")
+        response.content_type = "text/html"
+        return response
+    
+@bp.route("/current_profile", methods=["GET"])
+async def get_current_profile():
+    try:
+        profile_id = session[CONFIG_CURRENT_USER]
+        profile = Profile.load_by_id(profile_id)
+        if (profile is None):
+            return "No user is logged in", 404
+        
+        return jsonify(profile.to_json())
+    except Exception as e:
+        return "No user is logged in", 404
+
+@bp.route("/demo_profiles", methods=["GET"])
+async def get_demo_profiles() :
+    data = Profile.load_by_institution_id(current_app.config[CONFIG_CURRENT_INSTITUTION].id)
+    profiles = list(map(lambda x: x.to_json(), data))
+    rv = jsonify({"profiles": profiles})
+    return rv
 
 @bp.before_request
 async def ensure_openai_token():
@@ -165,7 +199,7 @@ async def setup_clients():
     KB_FIELDS_SOURCEPAGE = os.getenv("KB_FIELDS_SOURCEPAGE", "sourcepage")
 
     CURRENT_INSTITUTION = os.getenv("CURRENT_INSTITUTION")
-    CURRENT_USER = os.getenv("CURRENT_USER")
+    DEFAULT_USER = os.getenv("CURRENT_USER")
 
     # Use the current user identity to authenticate with Azure OpenAI, Cognitive Search and Blob Storage (no secrets needed,
     # just use 'az login' locally, and managed identity when deployed on Azure). If you need to use keys, use separate AzureKeyCredential instances with the
@@ -204,9 +238,13 @@ async def setup_clients():
     Conversation.configure(AZURE_COSMOS_HOST, AZURE_COSMOS_DB, AZURE_COSMOS_KEY)
 
     current_institution = Institution.load_by_id(CURRENT_INSTITUTION)
-    current_profile = Profile.load_by_user_id(CURRENT_USER)
+    current_profile = Profile.load_by_user_id(DEFAULT_USER)
+    
     current_app.config[CONFIG_CURRENT_INSTITUTION] = current_institution
     current_app.config[CONFIG_CURRENT_USER] = current_profile
+
+    # load demo profiles into database
+    ProfileLoader.loadAndPersist()
 
     # Various approaches to integrate GPT and external knowledge, most applications will use a single one of these patterns
     # or some derivative, here we include several for exploration purposes
@@ -237,7 +275,6 @@ async def setup_clients():
         "rrr": ChatReadRetrieveReadApproach(
             search_client,
             current_institution,
-            current_profile,
             str(uuid.uuid4()),
             AZURE_OPENAI_CHATGPT_DEPLOYMENT,
             AZURE_OPENAI_CHATGPT_MODEL,

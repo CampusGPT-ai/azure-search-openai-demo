@@ -16,8 +16,10 @@ from profile.institution import Institution
 from profile.profile import Profile
 from profile.conversation import Conversation
 from quart import jsonify
+from quart import session
 import json
 
+CONFIG_CURRENT_USER = "current_user"
 
 class ChatReadRetrieveReadApproach(ChatApproach):
 
@@ -71,7 +73,7 @@ Only generate questions and do not generate any text before or after the questio
         {'role' : ASSISTANT, 'content' : 'degree planning, help with financial aid, career advice' }
     ]
 
-    def __init__(self, search_client: SearchClient, current_institution: Institution, current_profile: Profile, current_session_id: str, chatgpt_deployment: str, chatgpt_model: str, embedding_deployment: str, sourcepage_field: str, content_field: str):
+    def __init__(self, search_client: SearchClient, current_institution: Institution, current_session_id: str, chatgpt_deployment: str, chatgpt_model: str, embedding_deployment: str, sourcepage_field: str, content_field: str):
         self.search_client = search_client
         self.chatgpt_deployment = chatgpt_deployment
         self.chatgpt_model = chatgpt_model
@@ -80,7 +82,6 @@ Only generate questions and do not generate any text before or after the questio
         self.content_field = content_field
         self.chatgpt_token_limit = get_token_limit(chatgpt_model)
         self.current_institution = current_institution
-        self.current_profile = current_profile
         self.current_session = current_session_id
         
     async def run(self, history: list[dict[str, str]], overrides: dict[str, Any]) -> Any:
@@ -102,8 +103,9 @@ Only generate questions and do not generate any text before or after the questio
         
         currentConversation = Conversation.create_if_not_exists(
             id=conversation_id, 
-            session_id=self.current_session ,
-            user_id=self.current_profile.user_id)
+            session_id=self.current_session,
+            user_id=session[CONFIG_CURRENT_USER]
+        )
 
         # load history from persisted store
         history = ChatHistory.load_by_conversation(currentConversation.id)
@@ -211,7 +213,7 @@ Only generate questions and do not generate any text before or after the questio
         # persist response in chat history
         ChatHistory.create_interaction(
             conversation_id=currentConversation.id, 
-            user_id=self.current_profile.user_id, 
+            user_id=session[CONFIG_CURRENT_USER], 
             user_content=user_query, 
             bot_content=chat_content_json.get("answer")
         )

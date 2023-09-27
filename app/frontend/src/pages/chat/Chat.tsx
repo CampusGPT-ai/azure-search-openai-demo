@@ -17,8 +17,8 @@ import { ClearChatButton } from "../../components/ClearChatButton";
 import { UserChatHistory } from "../../components/UserChatHistory/UserChatHistory";
 import { ConversationsResponse, ConversationsModel, ChatHistoryMessageModel } from "../../api";
 import { conversationsApi } from "../../api";
-import { interestsAllApi } from "../../api";
-import { InterestsResponse, InterestModel } from "../../api";
+import { interestsAllApi, currentProfileApi } from "../../api";
+import { InterestsResponse, InterestModel, ProfileModel } from "../../api";
 
 import styles from "./Chat.module.css";
 import { InterestList } from "../../components/Interests/InterestList";
@@ -53,6 +53,7 @@ const Chat = () => {
     const [isNewConversation, setIsNewConversation] = useState<boolean>(getLocalStorage<boolean>("isNewConversation") || false);
     const [conversationId, setConversationId] = useState<string>(getLocalStorage<string>("conversationId") || uuid().toString());
     const [activeConversation, setActiveConversation] = useState<ConversationsModel | null>(null);
+    const [currentUser, setCurrentUser] = useState<ProfileModel | null>(null);
 
     const makeApiRequest = async (question: string) => {
         console.log("Asking question: " + question);
@@ -121,11 +122,28 @@ const Chat = () => {
         }
     };
 
+    const makeCurrentUserApiRequest = async () => {
+        setIsLoading(true);
+        try {
+            const result = await currentProfileApi();
+            console.log("Current user: " + result);
+            setCurrentUser(result.profile);
+        } catch (e) {
+            setError(e);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        makeCurrentUserApiRequest();
+        chatMessageStreamEnd.current?.scrollIntoView({ behavior: "smooth" }), [isLoading];
+    }, []);
+
     useEffect(() => {
         makeConversationsApiRequest();
         makeInterestApiRequest();
-        chatMessageStreamEnd.current?.scrollIntoView({ behavior: "smooth" }), [isLoading];
-    }, []);
+    }, [currentUser]);
 
     const clearChat = () => {
         lastQuestionRef.current = "";
