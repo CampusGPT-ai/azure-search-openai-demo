@@ -159,7 +159,7 @@ async def get_current_profile():
         if (profile is None):
             return "No user is logged in", 404
         
-        return jsonify(profile.to_json())
+        return jsonify({ "profile": profile.to_json()})
     except Exception as e:
         return "No user is logged in", 404
 
