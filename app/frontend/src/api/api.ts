@@ -1,4 +1,4 @@
-import { AskRequest, AskResponse, ChatRequest, InterestsResponse, ConversationsResponse } from "./models";
+import { AskRequest, AskResponse, ChatRequest, InterestsResponse, ConversationsResponse, ProfileResponse, ProfilesResponse } from "./models";
 
 export async function askApi(options: AskRequest): Promise<AskResponse> {
     const response = await fetch("/ask", {
@@ -83,6 +83,22 @@ export async function interestsAllApi(): Promise<InterestsResponse> {
     return parsedResponse;
 }
 
+export async function demoProfilesApi(): Promise<ProfilesResponse> {
+    const response = await fetch("/demo_profiles", {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json"
+        }
+    });
+
+    const parsedResponse: ProfilesResponse = await response.json();
+    if (response.status > 299 || !response.ok) {
+        throw Error(parsedResponse.error || "Unknown error");
+    }
+
+    return parsedResponse;
+}
+
 export async function conversationsApi(): Promise<ConversationsResponse> {
     const response = await fetch("/conversations", {
         method: "GET",
@@ -92,6 +108,22 @@ export async function conversationsApi(): Promise<ConversationsResponse> {
     });
 
     const parsedResponse: ConversationsResponse = await response.json();
+    if (response.status > 299 || !response.ok) {
+        throw Error(parsedResponse.error || "Unknown error");
+    }
+
+    return parsedResponse;
+}
+
+export async function currentProfileApi(): Promise<ProfileResponse> {
+    const response = await fetch("/current_profile", {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json"
+        }
+    });
+
+    const parsedResponse: ProfileResponse = await response.json();
     if (response.status > 299 || !response.ok) {
         throw Error(parsedResponse.error || "Unknown error");
     }

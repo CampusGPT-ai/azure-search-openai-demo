@@ -80,3 +80,24 @@ export type ConversationsResponse = {
     list: Array<ConversationsModel>;
     error?: string;
 };
+
+export type ProfileResponse = {
+    profile: ProfileModel;
+    error?: string;
+};
+
+export type ProfilesResponse = {
+    profiles: Array<ProfileModel>;
+    error?: string;
+};
+
+export type ProfileModel = {
+    id: string;
+    user_id: string;
+    full_name: string;
+    avatar: string;
+    interests: Array<string>;
+    demographics: Map<string, string>;
+    academics: Map<string, string>;
+    courses: Array<string>;
+};

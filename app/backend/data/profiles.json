@@ -1,0 +1,107 @@
+{
+  "profiles": [
+    {
+      "id": "32ddc7fd-fdb8-4bd6-a7c6-b7bae1aeb1c5",
+      "user_id": "jjacksonville",
+      "institution_id": "fsu",
+      "full_name": "Jamal Jacksonville",
+      "avatar": "jamal",
+      "interests": [
+        "team sports",
+        "mental health"
+      ],
+      "demographics": [
+        {
+          "ethnicity": "African American"
+        },
+        {
+          "gender": "Male"
+        }
+      ],
+      "academics": [
+        {
+          "Academic Year": "3"
+        },
+        {
+          "Major": "English"
+        },
+        {
+          "Minor": "History"
+        }
+      ],
+      "courses": [
+
+      ]
+    },
+    {
+      "id": "928d1f32-3fb3-4982-9b1e-54ce890feab7",
+      "user_id": "ttallahassee",
+      "institution_id": "fsu",
+      "full_name": "Tiffany Tallahassee",
+      "avatar": "tiffany",
+      "interests": [
+        "languages",
+        "outdoor activities",
+        "watersports",
+        "peforming arts"
+      ],
+      "demographics": [
+        {
+          "Ethnicity": "White"
+        },
+        {
+          "Gender": "Female"
+        }
+      ],
+      "academics": [
+        {
+          "Academic Year": "2"
+        },
+        {
+          "Major": "Physics"
+        },
+        {
+          "Minor": "Mathematics"
+        }
+      ],
+      "courses": [
+        
+      ]
+    },
+    {
+      "id": "e3fe0687-6562-49ed-8150-71af1c545447",
+      "user_id": "ddaytona",
+      "institution_id": "fsu",
+      "full_name": "Dylan Daytona",
+      "avatar": "dylan",
+      "interests": [
+        "languages",
+        "outdoor activities",
+        "watersports",
+        "peforming arts"
+      ],
+      "demographics": [
+        {
+          "Ethnicity": "White"
+        },
+        {
+          "Gender": "Male"
+        }
+      ],
+      "academics": [
+        {
+          "Academic Year": "2"
+        },
+        {
+          "Major": "Physics"
+        },
+        {
+          "Minor": "Mathematics"
+        }
+      ],
+      "courses": [
+        
+      ]
+    }
+  ]
+}

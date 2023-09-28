@@ -12,13 +12,10 @@ import { QuestionInput } from "../../components/QuestionInput";
 import { ExampleList } from "../../components/Example";
 import { UserChatMessage } from "../../components/UserChatMessage";
 import { AnalysisPanel, AnalysisPanelTabs } from "../../components/AnalysisPanel";
-import { SettingsButton } from "../../components/SettingsButton";
-import { ClearChatButton } from "../../components/ClearChatButton";
-import { UserChatHistory } from "../../components/UserChatHistory/UserChatHistory";
 import { ConversationsResponse, ConversationsModel, ChatHistoryMessageModel } from "../../api";
 import { conversationsApi } from "../../api";
-import { interestsAllApi } from "../../api";
-import { InterestsResponse, InterestModel } from "../../api";
+import { interestsAllApi, currentProfileApi } from "../../api";
+import { InterestsResponse, InterestModel, ProfileModel } from "../../api";
 
 import styles from "./Chat.module.css";
 import { InterestList } from "../../components/Interests/InterestList";
@@ -53,6 +50,7 @@ const Chat = () => {
     const [isNewConversation, setIsNewConversation] = useState<boolean>(getLocalStorage<boolean>("isNewConversation") || false);
     const [conversationId, setConversationId] = useState<string>(getLocalStorage<string>("conversationId") || uuid().toString());
     const [activeConversation, setActiveConversation] = useState<ConversationsModel | null>(null);
+    const [currentUser, setCurrentUser] = useState<ProfileModel | null>(null);
 
     const makeApiRequest = async (question: string) => {
         console.log("Asking question: " + question);
@@ -121,11 +119,33 @@ const Chat = () => {
         }
     };
 
+    const makeCurrentUserApiRequest = async () => {
+        setIsLoading(true);
+        try {
+            const result = await currentProfileApi();
+            console.log("Current user: " + result);
+            setCurrentUser(result.profile);
+        } catch (e) {
+            setError(e);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     useEffect(() => {
-        makeConversationsApiRequest();
-        makeInterestApiRequest();
+        makeCurrentUserApiRequest();
         chatMessageStreamEnd.current?.scrollIntoView({ behavior: "smooth" }), [isLoading];
     }, []);
+
+    useEffect(() => {
+        setConversationId(uuid().toString());
+        setConversations(undefined);
+        setInterests(undefined);
+        setIsNewConversation(true);
+        clearChat();
+        makeConversationsApiRequest();
+        makeInterestApiRequest();
+    }, [currentUser]);
 
     const clearChat = () => {
         lastQuestionRef.current = "";

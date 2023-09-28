@@ -1,9 +1,11 @@
-import { Outlet, NavLink, Link } from "react-router-dom";
-import { Persona } from "@fluentui/react-components";
+import { useState, useEffect } from "react";
+import { Outlet, NavLink, Link, useOutletContext } from "react-router-dom";
+import { Persona, Subtitle2 } from "@fluentui/react-components";
 
-import avatar from "../../assets/reinhold.png";
+import avatar from "../../assets/avatars/reinhold.png";
 
 import styles from "./Layout.module.css";
+import { ProfileModel, currentProfileApi } from "../../api";
 
 import { FluentProvider, teamsLightTheme, BrandVariants, Theme, createDarkTheme, createLightTheme } from "@fluentui/react-components";
 
@@ -40,6 +42,33 @@ const currentTheme: Theme = lightTheme;
 //  darkTheme.colorBrandForeground2 = demoTheme[120];
 
 const Layout = () => {
+    const [loggedInUser, setLoggedInUser] = useState<ProfileModel | null>(null);
+    const [isLoading, setIsLoading] = useState<boolean>(false);
+    const [error, setError] = useState<unknown>();
+
+    // TODO: this is a hack to get the current user loaded in the layout component; need to find a way to load it once in layout and then pass it down to the other components
+    const makeCurrentUserApiRequest = async () => {
+        setIsLoading(true);
+        try {
+            const result = await currentProfileApi();
+            console.log("Current user: " + result);
+            setLoggedInUser(result.profile);
+            console.log("Loded user in layout component: " + loggedInUser);
+        } catch (e) {
+            setError(e);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        makeCurrentUserApiRequest();
+    }, []);
+
+    useEffect(() => {
+        console.log("detected change in loggedInUser in layout: " + loggedInUser?.full_name);
+    }, [loggedInUser]);
+
     return (
         <FluentProvider theme={lightTheme}>
             <div className={styles.layout}>
@@ -62,17 +91,7 @@ const Layout = () => {
                                 </li>
                             </ul>
                         </nav>
-                        <Persona
-                            className={styles.avatar}
-                            textAlignment="center"
-                            size="large"
-                            name="Reinhold Staudinger"
-                            avatar={{
-                                image: {
-                                    src: avatar
-                                }
-                            }}
-                        />
+                        <span className={styles.avatar}>Logged in user: {loggedInUser?.full_name}</span>
                     </div>
                 </header>
 

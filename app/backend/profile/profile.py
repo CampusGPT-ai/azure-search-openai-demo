@@ -1,4 +1,6 @@
 import uuid
+import json
+
 
 import azure.cosmos.cosmos_client as cosmos_client
 import azure.cosmos.exceptions as exceptions
@@ -18,15 +20,27 @@ class Profile:
     _cosmos_db: DatabaseProxy = None
     _cosmos_container: ContainerProxy = None
 
-    def __init__(self, id, user_id, institution_id, full_name, major, minor, semester, interests):
+    def __init__(
+            self, id: str, 
+            user_id: str, 
+            institution_id: str, 
+            full_name: str, 
+            avatar: str, 
+            interests: list, 
+            demographics: dict, 
+            academics: dict, 
+            courses: list
+        ):
         self.id = id
         self.user_id = user_id
         self.institution_id = institution_id
         self.full_name = full_name
-        self.major = major
-        self.minor = minor
-        self.semester = semester
         self.interests = interests
+        self.demographics = demographics
+        self.academics = academics
+        self.courses = courses
+        self.avatar = avatar
+
 
     @classmethod
     def configure(cls, host, database, master_key):
@@ -43,7 +57,29 @@ class Profile:
             profile = cls(str(uuid.uuid4()), user_id, institution_id, None, None, None, None, [])
         return profile
     
+    @classmethod
+    def from_dict(cls, data):
+        return cls(
+            id=data.get("id"),
+            user_id=data.get("user_id"),
+            institution_id=data.get("institution_id"),
+            full_name=data.get("full_name"),
+            avatar=data.get("avatar"),
+            demographics=cls.flat_dictionary(data.get("demographics")),
+            academics=cls.flat_dictionary(data.get("academics")),
+            interests=data.get("interests"),
+            courses=data.get("courses")
+        )
 
+    @classmethod
+    def flat_dictionary(cls, items):
+        if items is None:
+            return None
+        if not isinstance(items, list):
+            return items
+        return {k: v for d in items for k, v in d.items()}
+        
+        
     @classmethod
     def load_by_id(cls, id):
         p = None
@@ -53,16 +89,7 @@ class Profile:
             # leave profile as none
             p = None
 
-        return cls(
-            p.get("id"), 
-            p.get("user_id"),
-            p.get("institution_id"),
-            p.get("full_name"),
-            p.get("major"),
-            p.get("minor"),
-            p.get("semester"),
-            p.get("interests")
-        ) if p else None
+        return cls.from_dict(p) if p else None
 
     @classmethod
     def load_by_user_id(cls, user_id):
@@ -79,16 +106,24 @@ class Profile:
            p = item
            break
         
-        return cls(
-            p.get("id"), 
-            p.get("user_id"),
-            p.get("institution_id"),
-            p.get("full_name"),
-            p.get("major"),
-            p.get("minor"),
-            p.get("semester"),
-            p.get("interests")
-        ) if p is not None else None
+        return cls.from_dict(p) if p is not None else None
+    
+    @classmethod
+    def load_by_institution_id(cls, institution_id):
+        results = cls._cosmos_container.query_items(
+            query="SELECT * FROM profiles WHERE profiles.institution_id=@id",
+            parameters=[
+                {"name": "@id", "value": institution_id}
+            ],
+            enable_cross_partition_query=True
+        )
+
+        profiles = []
+        for item in results:
+            profile = cls.from_dict(item)
+            profiles.append(profile)
+
+        return profiles
     
     def save(self):
         #validate institution
@@ -99,3 +134,5 @@ class Profile:
         
         Profile._cosmos_container.upsert_item(self.__dict__)
 
+    def to_json(self):
+        return self.__dict__
