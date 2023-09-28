@@ -56,12 +56,12 @@ class Conversation:
         convos = []
         for item in items:
            convos.append(cls(
-            item.get("id"), 
-            item.get("user_id"),
-            item.get("session_id"),
-            item.get("topic"),
-            item.get("start_time"),
-            item.get("end_time"))
+            id=item.get("id"), 
+            session_id=item.get("session_id"),
+            user_id=item.get("user_id"),
+            topic=item.get("topic"),
+            start_time=item.get("start_time"),
+            end_time=item.get("end_time"))
         )
         return convos
     
@@ -75,12 +75,12 @@ class Conversation:
             convo = None
 
         return cls(
-            convo.get("id"), 
-            convo.get("user_id"),
-            convo.get("session_id"),
-            convo.get("topic"),
-            convo.get("start_time"),
-            convo.get("end_time")
+            id=convo.get("id"), 
+            session_id=convo.get("session_id"),
+            user_id=convo.get("user_id"),
+            topic=convo.get("topic"),
+            start_time=convo.get("start_time"),
+            end_time=convo.get("end_time")
         ) if convo else None
     
     def save(self):

@@ -95,6 +95,7 @@ Only generate questions and do not generate any text before or after the questio
         user_query = history[-1]["user"]
         user_q = 'Generate search query for: ' + user_query
 
+        # manage creation or loading of conversation
         conversation_id = overrides.get("conversation_id")
         if conversation_id is None or conversation_id == '':
             conversation_id = str(uuid.uuid4())
@@ -107,10 +108,13 @@ Only generate questions and do not generate any text before or after the questio
             user_id=session[CONFIG_CURRENT_USER]
         )
 
-        # load history from persisted store
+        # load history from persisted store based on the conversation
         history = ChatHistory.load_by_conversation(currentConversation.id)
 
-        # STEP 1: Generate an optimized keyword search query based on the chat history and the last question
+        #load profile from session
+        current_profile = Profile.load_by_id(session[CONFIG_CURRENT_USER])
+
+        # QUERY STEP 1: Generate an optimized keyword search query based on the chat history and the last question
         messages = self.get_messages_from_history(
             self.query_prompt_template,
             self.chatgpt_model,
@@ -132,8 +136,11 @@ Only generate questions and do not generate any text before or after the questio
         if query_text.strip() == "0":
             query_text = user_query # Use the last user input if we failed to generate a better query
 
-        # STEP 2: Retrieve relevant documents from the search index with the GPT optimized query
 
+        # QUERY STEP 2: Retrieve relevant documents from the search index with the GPT optimized query
+
+        # TODO: in order to filter search results, modify the filter based on query results
+        
         # If retrieval mode includes vectors, compute an embedding for the query
         if has_vector:
             query_vector = (await openai.Embedding.acreate(engine=self.embedding_deployment, input=query_text))["data"][0]["embedding"]
@@ -170,13 +177,13 @@ Only generate questions and do not generate any text before or after the questio
             results = [doc[self.sourcepage_field] + ": " + nonewlines(doc[self.content_field]) async for doc in r]
         content = "\n".join(results)
 
+        # The below is unused for now, can be revisited later
+
         # TODO: revisit whether follow-up should be handled in the same call or separate
         # follow_up_questions_prompt = self.follow_up_questions_prompt_content if overrides.get("suggest_followup_questions") else ""
         follow_up_questions_prompt = ""  # blank out so we do not embed follup ups in answer, we will make a separate call for that
 
-        # STEP 3: Generate a contextual and content specific answer using the search results and chat history
-
-        # Allow client to replace the entire prompt, or to inject into the exiting prompt using >>>
+        # Allow client to replace the entire prompt, or to inject into the exiting prompt using >>> - (we are not using prompt injection for now)
     #    prompt_override = overrides.get("prompt_override")
     #    if prompt_override is None:
     #        system_message = self.system_message_chat_conversation.format(injected_prompt="", follow_up_questions_prompt=follow_up_questions_prompt)
@@ -185,6 +192,8 @@ Only generate questions and do not generate any text before or after the questio
     #    else:
     #        system_message = prompt_override.format(follow_up_questions_prompt=follow_up_questions_prompt)
 
+
+         # QUERY STEP 3: Generate a contextual and content specific answer using the search results and chat history
         messages = self.get_messages_from_history(
             self.system_message_chat_conversation,
             self.chatgpt_model,

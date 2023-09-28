@@ -12,9 +12,6 @@ import { QuestionInput } from "../../components/QuestionInput";
 import { ExampleList } from "../../components/Example";
 import { UserChatMessage } from "../../components/UserChatMessage";
 import { AnalysisPanel, AnalysisPanelTabs } from "../../components/AnalysisPanel";
-import { SettingsButton } from "../../components/SettingsButton";
-import { ClearChatButton } from "../../components/ClearChatButton";
-import { UserChatHistory } from "../../components/UserChatHistory/UserChatHistory";
 import { ConversationsResponse, ConversationsModel, ChatHistoryMessageModel } from "../../api";
 import { conversationsApi } from "../../api";
 import { interestsAllApi, currentProfileApi } from "../../api";
@@ -141,6 +138,11 @@ const Chat = () => {
     }, []);
 
     useEffect(() => {
+        setConversationId(uuid().toString());
+        setConversations(undefined);
+        setInterests(undefined);
+        setIsNewConversation(true);
+        clearChat();
         makeConversationsApiRequest();
         makeInterestApiRequest();
     }, [currentUser]);

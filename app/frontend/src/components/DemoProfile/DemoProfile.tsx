@@ -4,7 +4,17 @@ import { Image } from "@fluentui/react-components";
 import { Subtitle2, Title2 } from "@fluentui/react-components";
 
 import styles from "./DemoProfile.module.css";
-import { ProfileModel } from "../../api";
+
+// TODO: avatar handling for demo only, needs to move to proper static asset handling
+import dylan from "../../assets/avatars/dylan.png";
+import jamal from "../../assets/avatars/jamal.png";
+import tiffany from "../../assets/avatars/tiffany.png";
+
+const avatars: Map<string, string> = new Map();
+avatars.set("dylan", dylan);
+avatars.set("jamal", jamal);
+avatars.set("tiffany", tiffany);
+// end temp avatar handling
 
 export interface Profile {
     id: string;
@@ -18,35 +28,39 @@ export interface Profile {
 }
 
 interface Props {
-    name: string;
     profile: Profile;
     onSelectProfile: (id: string, el: HTMLDivElement) => void;
 }
 
-export const DemoProfile = ({ name, profile: { id, user_id, full_name, avatar, interests, demographics, academics, courses }, onSelectProfile }: Props) => {
+export const DemoProfile = ({ profile: { id, user_id, full_name, avatar, interests, demographics, academics, courses }, onSelectProfile }: Props) => {
     let demoStr: string = "";
-    demographics.forEach((value, key, map) => {
+
+    Array.from(demographics.entries()).forEach(([key, value]) => {
+        let keys = Object.keys(value);
+        let values = Object.values(value);
+
         if (demoStr.length > 0) {
             demoStr = demoStr + ", ";
         }
-        demoStr = demoStr + key + ": " + value;
+        let capKey = keys[0].charAt(0).toUpperCase() + keys[0].slice(1);
+        demoStr = demoStr + capKey + ": " + values[0];
     });
 
     let acadStr: string = "";
-    academics.forEach((value, key, map) => {
+    Array.from(academics.entries()).forEach(([key, value]) => {
+        let keys = Object.keys(value);
+        let values = Object.values(value);
+        console.log("key: " + keys[0] + ", value: " + values[0]);
         if (acadStr.length > 0) {
             acadStr = acadStr + ", ";
         }
-        acadStr = key + ": " + value;
+        let capKey = keys[0].charAt(0).toUpperCase() + keys[0].slice(1);
+        acadStr = acadStr + capKey + ": " + values[0];
     });
 
     let interestStr: string = "";
     interests.forEach((x, i, arr) => {
         interestStr = interestStr + ", " + x;
-    });
-
-    academics.forEach((value, key, map) => {
-        acadStr = acadStr + ", " + key + ": " + value;
     });
 
     return (
@@ -61,7 +75,7 @@ export const DemoProfile = ({ name, profile: { id, user_id, full_name, avatar, i
                 <Title2>{full_name}</Title2>
             </div>
             <div className={styles.avatarContainer}>
-                <Image width={200} height={200} shape="circular" alt={"Photo of " + full_name} src={avatar}></Image>
+                <Image width={200} height={200} shape="circular" alt={full_name} src={avatars.get(avatar)}></Image>
             </div>
             <div className={styles.infoContainer}>
                 <Subtitle2>Academic Profile</Subtitle2>

@@ -46,6 +46,7 @@ const Layout = () => {
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [error, setError] = useState<unknown>();
 
+    // TODO: this is a hack to get the current user loaded in the layout component; need to find a way to load it once in layout and then pass it down to the other components
     const makeCurrentUserApiRequest = async () => {
         setIsLoading(true);
         try {

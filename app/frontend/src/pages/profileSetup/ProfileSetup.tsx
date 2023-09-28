@@ -52,13 +52,13 @@ const ProfileSetup = () => {
                 <>
                     <Stack horizontal horizontalAlign="stretch" tokens={stackTokens}>
                         <StackItem className={styles.profileContainer}>
-                            <DemoProfile name={profiles[0].full_name} profile={profiles[0]} onSelectProfile={onSelectProfile}></DemoProfile>
+                            <DemoProfile profile={profiles[0]} onSelectProfile={onSelectProfile}></DemoProfile>
                         </StackItem>
                         <StackItem className={styles.profileContainer}>
-                            <DemoProfile name={profiles[0].full_name} profile={profiles[1]} onSelectProfile={onSelectProfile}></DemoProfile>
+                            <DemoProfile profile={profiles[1]} onSelectProfile={onSelectProfile}></DemoProfile>
                         </StackItem>
                         <StackItem className={styles.profileContainer}>
-                            <DemoProfile name={profiles[0].full_name} profile={profiles[2]} onSelectProfile={onSelectProfile}></DemoProfile>
+                            <DemoProfile profile={profiles[2]} onSelectProfile={onSelectProfile}></DemoProfile>
                         </StackItem>
                     </Stack>
                     <form action="/demo_login" method="POST">

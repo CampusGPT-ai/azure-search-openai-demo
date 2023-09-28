@@ -5,7 +5,7 @@
       "user_id": "jjacksonville",
       "institution_id": "fsu",
       "full_name": "Jamal Jacksonville",
-      "avatar": "/src/assets/avatars/jamal.png",
+      "avatar": "jamal",
       "interests": [
         "team sports",
         "mental health"
@@ -38,7 +38,7 @@
       "user_id": "ttallahassee",
       "institution_id": "fsu",
       "full_name": "Tiffany Tallahassee",
-      "avatar": "/src/assets/avatars/tiffany.png",
+      "avatar": "tiffany",
       "interests": [
         "languages",
         "outdoor activities",
@@ -73,7 +73,7 @@
       "user_id": "ddaytona",
       "institution_id": "fsu",
       "full_name": "Dylan Daytona",
-      "avatar": "/src/assets/avatars/dylan.png",
+      "avatar": "dylan",
       "interests": [
         "languages",
         "outdoor activities",
