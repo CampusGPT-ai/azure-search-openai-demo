@@ -1,13 +1,15 @@
 from typing import Any
 
-
 import openai
 import time
 import uuid
+import json
+
 from azure.search.documents.aio import SearchClient
 from azure.search.documents.models import QueryType
 
 from approaches.approach import ChatApproach
+from approaches.filter_generator import FilterGenerator
 from core.messagebuilder import MessageBuilder
 from core.modelhelper import get_token_limit
 from text import nonewlines
@@ -17,7 +19,9 @@ from profile.profile import Profile
 from profile.conversation import Conversation
 from quart import jsonify
 from quart import session
-import json
+
+
+
 
 CONFIG_CURRENT_USER = "current_user"
 
@@ -151,6 +155,9 @@ Only generate questions and do not generate any text before or after the questio
         if not has_text:
             query_text = None
 
+        filter_generator = FilterGenerator(current_profile)
+        filter = filter_generator.generate_search_filter()
+        
         # Use semantic L2 reranker if requested and if retrieval mode is text or hybrid (vectors + text)
         if overrides.get("semantic_ranker") and has_text:
             r = await self.search_client.search(query_text,

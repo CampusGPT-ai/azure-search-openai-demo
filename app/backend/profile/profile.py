@@ -1,6 +1,7 @@
 import uuid
 import json
 
+
 import azure.cosmos.cosmos_client as cosmos_client
 import azure.cosmos.exceptions as exceptions
 from azure.cosmos import PartitionKey
@@ -19,7 +20,17 @@ class Profile:
     _cosmos_db: DatabaseProxy = None
     _cosmos_container: ContainerProxy = None
 
-    def __init__(self, id, user_id, institution_id, full_name, avatar, interests, demographics, academics, courses):
+    def __init__(
+            self, id: str, 
+            user_id: str, 
+            institution_id: str, 
+            full_name: str, 
+            avatar: str, 
+            interests: list, 
+            demographics: dict, 
+            academics: dict, 
+            courses: list
+        ):
         self.id = id
         self.user_id = user_id
         self.institution_id = institution_id
@@ -54,12 +65,21 @@ class Profile:
             institution_id=data.get("institution_id"),
             full_name=data.get("full_name"),
             avatar=data.get("avatar"),
-            demographics=data.get("demographics"),
-            academics=data.get("academics"),
+            demographics=cls.flat_dictionary(data.get("demographics")),
+            academics=cls.flat_dictionary(data.get("academics")),
             interests=data.get("interests"),
             courses=data.get("courses")
         )
 
+    @classmethod
+    def flat_dictionary(cls, items):
+        if items is None:
+            return None
+        if not isinstance(items, list):
+            return items
+        return {k: v for d in items for k, v in d.items()}
+        
+        
     @classmethod
     def load_by_id(cls, id):
         p = None

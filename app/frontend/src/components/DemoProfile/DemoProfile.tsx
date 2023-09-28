@@ -34,29 +34,27 @@ interface Props {
 
 export const DemoProfile = ({ profile: { id, user_id, full_name, avatar, interests, demographics, academics, courses }, onSelectProfile }: Props) => {
     let demoStr: string = "";
+    let demo_keys = Object.keys(demographics);
+    let demo_values = Object.values(demographics);
 
-    Array.from(demographics.entries()).forEach(([key, value]) => {
-        let keys = Object.keys(value);
-        let values = Object.values(value);
-
+    for (let i = 0; i < demo_keys.length; i++) {
         if (demoStr.length > 0) {
             demoStr = demoStr + ", ";
         }
-        let capKey = keys[0].charAt(0).toUpperCase() + keys[0].slice(1);
-        demoStr = demoStr + capKey + ": " + values[0];
-    });
+        let capKey = demo_keys[i].charAt(0).toUpperCase() + demo_keys[i].slice(1);
+        demoStr = demoStr + capKey + ": " + demo_values[i];
+    }
 
     let acadStr: string = "";
-    Array.from(academics.entries()).forEach(([key, value]) => {
-        let keys = Object.keys(value);
-        let values = Object.values(value);
-        console.log("key: " + keys[0] + ", value: " + values[0]);
+    let acad_keys = Object.keys(academics);
+    let acad_values = Object.values(academics);
+    for (let i = 0; i < acad_keys.length; i++) {
         if (acadStr.length > 0) {
             acadStr = acadStr + ", ";
         }
-        let capKey = keys[0].charAt(0).toUpperCase() + keys[0].slice(1);
-        acadStr = acadStr + capKey + ": " + values[0];
-    });
+        let capKey = acad_keys[i].charAt(0).toUpperCase() + acad_keys[i].slice(1);
+        acadStr = acadStr + capKey + ": " + acad_values[i];
+    }
 
     let interestStr: string = "";
     interests.forEach((x, i, arr) => {
