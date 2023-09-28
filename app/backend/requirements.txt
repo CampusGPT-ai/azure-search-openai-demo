@@ -1,6 +1,6 @@
 azure-identity==1.13.0
 quart==0.18.4
-langchain==0.0.236
+langchain==0.0.301
 openai[datalib]==0.27.8
 tiktoken==0.4.0
 azure-search-documents==11.4.0b6
@@ -11,4 +11,5 @@ azure-monitor-opentelemetry==1.0.0b15
 opentelemetry-instrumentation-asgi==0.40b0
 opentelemetry-instrumentation-requests==0.40b0
 opentelemetry-instrumentation-aiohttp-client==0.40b0
-azure-cosmos
+azure-cosmos==4.5.1
+quart==0.18.4

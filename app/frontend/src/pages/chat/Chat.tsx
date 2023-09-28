@@ -17,11 +17,13 @@ import { ClearChatButton } from "../../components/ClearChatButton";
 import { UserChatHistory } from "../../components/UserChatHistory/UserChatHistory";
 import { ConversationsResponse, ConversationsModel, ChatHistoryMessageModel } from "../../api";
 import { conversationsApi } from "../../api";
-import { interestsAllApi } from "../../api";
+import { interestsAllApi, topicApi } from "../../api";
 import { InterestsResponse, InterestModel } from "../../api";
+import { TopicModel, QuestionModel, TopicsResponse, QuestionsResponse } from "../../api";
 
 import styles from "./Chat.module.css";
 import { InterestList } from "../../components/Interests/InterestList";
+import { TopicList } from "../../components/Topic/TopicList";
 import { UserConversations } from "../../components/UserChatHistory/UserConversations";
 
 const Chat = () => {
@@ -49,6 +51,8 @@ const Chat = () => {
 
     const [conversations, setConversations] = useState<ConversationsResponse | undefined>(undefined);
     const [interests, setInterests] = useState<InterestsResponse | undefined>(undefined);
+    const [topics, setTopics] = useState<TopicsResponse | undefined>(undefined);
+    const [questions, setQuestions] = useState<QuestionsResponse | undefined>(undefined);
 
     const [isNewConversation, setIsNewConversation] = useState<boolean>(getLocalStorage<boolean>("isNewConversation") || false);
     const [conversationId, setConversationId] = useState<string>(getLocalStorage<string>("conversationId") || uuid().toString());
@@ -85,6 +89,7 @@ const Chat = () => {
                     suggestFollowupQuestions: true
                 }
             };
+            console.log("sending request to server: " + request);
             const result = await chatApi(request);
             setAnswers([...answers, [question, result]]);
             setConversationId(result.conversation_id);
@@ -94,6 +99,7 @@ const Chat = () => {
                 const convo: ConversationsModel = {
                     id: conversationId,
                     topic: result.conversation_topic,
+                    question: result.question,
                     start_time: Date.now().toString(),
                     end_time: "",
                     interactions: []
@@ -124,6 +130,7 @@ const Chat = () => {
     useEffect(() => {
         makeConversationsApiRequest();
         makeInterestApiRequest();
+        makeTopicApiRequest();
         chatMessageStreamEnd.current?.scrollIntoView({ behavior: "smooth" }), [isLoading];
     }, []);
 
@@ -248,6 +255,18 @@ const Chat = () => {
         }
     };
 
+    const makeTopicApiRequest = async () => {
+        setIsLoading(true);
+        try {
+            const result = await topicApi();
+            setTopics(result);
+        } catch (e) {
+            setError(e);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     const startNewChat = () => {
         console.log("Starting new chat");
         clearChat();
@@ -269,6 +288,12 @@ const Chat = () => {
     let conversationsList: Array<ConversationsModel> = [];
     if (conversations?.list) conversationsList = conversations.list;
 
+    let topicsList: Array<TopicModel> = [];
+    if (topics?.list) topicsList = topics.list;
+
+    let questionsList: Array<QuestionModel> = [];
+    if (questions?.list) questionsList = questions.list;
+
     return (
         <div className={styles.container}>
             <div className={styles.contentSection}>
@@ -277,6 +302,7 @@ const Chat = () => {
             </div>
             <div className={styles.contentSection}>
                 <h1>Trending Topics</h1>
+                <TopicList list={topicsList}></TopicList>
             </div>
             <div className={styles.chatSection}>
                 <Stack horizontal horizontalAlign="stretch">
@@ -337,7 +363,7 @@ const Chat = () => {
                         <div className={styles.chatInput}>
                             <QuestionInput
                                 clearOnSend
-                                placeholder="Type a new question (e.g. does my plan cover annual eye exams?)"
+                                placeholder="Type a new question or select one of the options above."
                                 disabled={isLoading}
                                 onSend={question => makeApiRequest(question)}
                             />

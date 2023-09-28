@@ -18,8 +18,15 @@ from profile.conversation import Conversation
 from quart import jsonify
 import json
 
+# Set up OpenAI API
 
+openai.api_key = "4efd5d72a7d9440cbbe6200784207ef0"
+openai.api_base = "https://cog-b3yybe3qy5wiq.openai.azure.com/"
+openai.api_type = 'azure'
+openai.api_version = '2023-07-01-preview'
 class ChatReadRetrieveReadApproach(ChatApproach):
+    jamal="dummy"
+    interests="art history"
 
     EMBEDDING = "contentVector"
 
@@ -33,13 +40,21 @@ class ChatReadRetrieveReadApproach(ChatApproach):
     top documents from search, then constructs a prompt with them, and then uses OpenAI to generate an completion
     (answer) with that prompt.
     """
-    system_message_chat_conversation = """Assistant helps students with general questions, and questions about academic advising. Be brief in your answers.
-Answer ONLY with the facts listed in the list of sources below. If there isn't enough information below, say you don't know. Do not generate answers that don't use the sources below. If asking a clarifying question to the user would help, ask the question.
-For tabular information return it as an html table. Do not return markdown format. If the question is not in English, answer in the language used in the question.
-Each source has a name followed by colon and the actual information, always include the source name for each fact you use in the response. Use square brackets to reference the source, e.g. [info1.txt]. Don't combine sources, list each source separately, e.g. [info1.txt][info2.pdf].
-Include the main topic of the current chat session in the respons.
-Return results in JSON format with the answer and topic as separate elements, following this example 
-{ "topic": "conversation topic", "answer": "response to user question" }.
+    system_message_chat_conversation = """You are an assistant that helps students with general questions, and questions about academic advising. You are helping a student named """+jamal+""".  This student is interested in"""+interests+"""Follow the instructions below and be brief in your answers. \n\n
+    [INSTRUCTIONS]:\n\n
+1. Answer ONLY with the facts listed in the list of sources below. If there isn't enough information below, say you don't know.\n
+2. Do not generate answers that don't use the sources listed below. If asking a clarifying question to the user would help, ask the question. \n
+3. If possible, personalize the response based on """+jamal+"""'s interests. \n
+3. Each source has a name followed by colon and the actual information, always include the source name for each fact you use in the response. Use square brackets to reference the source, e.g. [info1.txt]. Don't combine sources, list each source separately, e.g. [info1.txt][info2.pdf]. \n
+4. For tabular information return it as an html table. Do not return markdown format. \n
+5. If the question is not in English, answer in the language used in the question. \n
+6. Derive a "Conversation Topic" from the request. The conversation topic represents the general category of a question and can be a department or university service, the name of a tool or resource, or a more general topic or interest, for example "financial aid", "course selection", "finding my advisor" etc. are all good topics. \n
+7. Restate the question as it is provided.  If the chat input is not a clear question, do your best to derive a question that can be used to populate an FAQ in the future.
+8. Based on what you know about """+jamal+""", identify which of """+jamal+"""s interests are most relevant to your response and include them as a sub-list in your response.
+7. Return results in JSON format with the answer and topic as separate elements, following the example below \n\n
+[EXAMPLE]: \n\n
+{ "topic": "conversation topic", "question": "restated or derived question", "interests": "{"interest": "interest 1", "interest": "interest 2"...etc}", "answer": "response to """+jamal+"""'s question that is customized based on his personal information." }.\n\n
+[YOUR RESPONSE]:
 """
 
     follow_up_questions_prompt_content = """Generate three very brief follow-up questions that the user would likely ask next. 

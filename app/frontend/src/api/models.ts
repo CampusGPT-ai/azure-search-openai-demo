@@ -35,6 +35,7 @@ export type AskResponse = {
     conversation_id: string;
     conversation_topic: string;
     answer: string;
+    question: string;
     thoughts: string | null;
     data_points: string[];
     follow_up: string[];
@@ -57,6 +58,11 @@ export type InterestModel = {
     selected: boolean;
 };
 
+export type ExampleModel = {
+    question: string;
+    conversation_topic: string;
+};
+
 export type InterestsResponse = {
     list: Array<InterestModel>;
     error?: string;
@@ -68,9 +74,32 @@ export type ChatHistoryMessageModel = {
     bot: string;
 };
 
+export type TopicModel = {
+    id: string;
+    topic: string;
+};
+
+export type TopicsResponse = {
+    list: Array<TopicModel>;
+    error?: string;
+};
+
+export type QuestionsResponse = {
+    list: Array<QuestionModel>;
+    error?: string;
+};
+
+export type QuestionModel = {
+    id: string;
+    question: string;
+    topics: Array<TopicModel>;
+    interests: Array<InterestModel>;
+};
+
 export type ConversationsModel = {
     id: string;
     topic: string;
+    question: string;
     start_time: string;
     end_time: string;
     interactions: Array<ChatHistoryMessageModel>;
