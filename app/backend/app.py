@@ -183,8 +183,10 @@ async def setup_clients():
 
     # Replace these with your own values, either in environment variables or directly here
     AZURE_STORAGE_ACCOUNT = os.getenv("AZURE_STORAGE_ACCOUNT")
+    AZURE_STORAGE_ACCOUNT_CRED = os.getenv("AZURE_STORAGE_ACCOUNT_CRED")
     AZURE_STORAGE_CONTAINER = os.getenv("AZURE_STORAGE_CONTAINER")
     AZURE_SEARCH_SERVICE = os.getenv("AZURE_SEARCH_SERVICE")
+    AZURE_SEARCH_SERVICE_KEY = os.getenv("AZURE_SEARCH_SERVICE_KEY")
     AZURE_SEARCH_INDEX = os.getenv("AZURE_SEARCH_INDEX")
     AZURE_OPENAI_SERVICE = os.getenv("AZURE_OPENAI_SERVICE")
     AZURE_OPENAI_CHATGPT_DEPLOYMENT = os.getenv("AZURE_OPENAI_CHATGPT_DEPLOYMENT")
@@ -207,14 +209,16 @@ async def setup_clients():
     # If you encounter a blocking error during a DefaultAzureCredential resolution, you can exclude the problematic credential by using a parameter (ex. exclude_shared_token_cache_credential=True)
     azure_credential = DefaultAzureCredential(exclude_shared_token_cache_credential = True)
 
-    # Set up clients for Cognitive Search and Storage
     search_client = SearchClient(
         endpoint=f"https://{AZURE_SEARCH_SERVICE}.search.windows.net",
         index_name=AZURE_SEARCH_INDEX,
-        credential=AzureKeyCredential("HshGK5tUYkZY2UIkXDvWhPOGX6xUhAuEqWykoYP1OXAzSeCdxLG1"))
+        credential=AzureKeyCredential(AZURE_SEARCH_SERVICE_KEY)
+    )
+    
     blob_client = BlobServiceClient(
         account_url=f"https://{AZURE_STORAGE_ACCOUNT}.blob.core.windows.net",
-        credential=AzureSasCredential("?sv=2022-11-02&ss=bfqt&srt=sco&sp=rwdlacupyx&se=2025-01-02T00:31:31Z&st=2023-09-13T16:31:31Z&spr=https&sig=bEtJcUhkuwNxscObZP0W7mvOs4XKzL1Jtw5SyfO7oMw%3D"))
+        credential=AzureSasCredential(AZURE_STORAGE_ACCOUNT_CRED)
+    )
     blob_container_client = blob_client.get_container_client(AZURE_STORAGE_CONTAINER)
 
     # Used by the OpenAI SDK

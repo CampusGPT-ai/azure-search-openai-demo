@@ -1,6 +1,9 @@
 # cache file
 .DS_Store
 
+# env file with keys
+app/set-env-variables.sh
+
 # Azure az webapp deployment details
 .azure
 *_env
