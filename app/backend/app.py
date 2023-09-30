@@ -39,7 +39,6 @@ from profile.institution import Institution
 from profile.chathistory import ChatHistory
 from profile.conversation import Conversation
 
-CONFIG_OPENAI_TOKEN = "openai_token"
 CONFIG_CREDENTIAL = "azure_credential"
 CONFIG_ASK_APPROACHES = "ask_approaches"
 CONFIG_CHAT_APPROACHES = "chat_approaches"
@@ -170,14 +169,6 @@ async def get_demo_profiles() :
     rv = jsonify({"profiles": profiles})
     return rv
 
-@bp.before_request
-async def ensure_openai_token():
-    openai_token = current_app.config[CONFIG_OPENAI_TOKEN]
-    if openai_token.expires_on < time.time() + 60:
-        openai_token = await current_app.config[CONFIG_CREDENTIAL].get_token("https://cognitiveservices.azure.com/.default")
-        current_app.config[CONFIG_OPENAI_TOKEN] = openai_token
-        openai.api_key = openai_token.token
-
 @bp.before_app_serving
 async def setup_clients():
 
@@ -192,6 +183,7 @@ async def setup_clients():
     AZURE_OPENAI_CHATGPT_DEPLOYMENT = os.getenv("AZURE_OPENAI_CHATGPT_DEPLOYMENT")
     AZURE_OPENAI_CHATGPT_MODEL = os.getenv("AZURE_OPENAI_CHATGPT_MODEL")
     AZURE_OPENAI_EMB_DEPLOYMENT = os.getenv("AZURE_OPENAI_EMB_DEPLOYMENT")
+    AZURE_OPENAI_CHATGPT_KEY = os.getenv("AZURE_OPENAI_CHATGPT_KEY")
 
     AZURE_COSMOS_HOST = "https://{host}.documents.azure.com:443/".format(host=os.getenv("AZURE_COSMOS_HOST"))
     AZURE_COSMOS_DB = os.getenv("AZURE_COSMOS_DB")
@@ -224,14 +216,10 @@ async def setup_clients():
     # Used by the OpenAI SDK
     openai.api_base = f"https://{AZURE_OPENAI_SERVICE}.openai.azure.com"
     openai.api_version = "2023-05-15"
-    openai.api_type = "azure_ad"
-    openai_token = await azure_credential.get_token(
-        "https://cognitiveservices.azure.com/.default"
-    )
-    openai.api_key = openai_token.token
+    openai.api_type = "azure"
+    openai.api_key = AZURE_OPENAI_CHATGPT_KEY
 
     # Store on app.config for later use inside requests
-    current_app.config[CONFIG_OPENAI_TOKEN] = openai_token
     current_app.config[CONFIG_CREDENTIAL] = azure_credential
     current_app.config[CONFIG_BLOB_CONTAINER_CLIENT] = blob_container_client
 
