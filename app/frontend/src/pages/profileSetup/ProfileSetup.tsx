@@ -51,25 +51,25 @@ const ProfileSetup = () => {
             {!isLoading && (
                 <>
                     <Stack horizontal horizontalAlign="stretch" tokens={stackTokens}>
-                        <StackItem className={styles.profileContainer}>
-                            <DemoProfile profile={profiles[0]} onSelectProfile={onSelectProfile}></DemoProfile>
-                        </StackItem>
-                        <StackItem className={styles.profileContainer}>
-                            <DemoProfile profile={profiles[1]} onSelectProfile={onSelectProfile}></DemoProfile>
-                        </StackItem>
-                        <StackItem className={styles.profileContainer}>
-                            <DemoProfile profile={profiles[2]} onSelectProfile={onSelectProfile}></DemoProfile>
-                        </StackItem>
+                        {profiles.map((profile, index) => (
+                            <div key={index}>
+                                <StackItem className={styles.profileContainer}>
+                                    <DemoProfile profile={profile} onSelectProfile={onSelectProfile}></DemoProfile>
+                                </StackItem>
+                            </div>
+                        ))}
+                        ;
                     </Stack>
                     <form action="/demo_login" method="POST">
                         <div className={styles.loginButtonContainer}>
                             <Button
+                                className={styles.loginButton}
                                 type="submit"
                                 onClick={el => {
                                     console.log("logging in with profile id: " + selectedProfileId);
                                 }}
                             >
-                                Login as the selected user
+                                LOGIN
                             </Button>
                             <input type="hidden" name="profile_id" value={selectedProfileId} />
                         </div>

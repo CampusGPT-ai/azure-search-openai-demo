@@ -17,3 +17,12 @@
 .loginButtonContainer {
     margin-top: 30px;
 }
+
+button.loginButton {
+    background-color: #782f40;
+    color: #f2f2f2;
+    font-size: 20px;
+    font-weight: 600;
+    padding: 20px;
+    border-radius: 10px;
+}

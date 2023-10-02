@@ -291,12 +291,17 @@ const Chat = () => {
 
     return (
         <div className={styles.container}>
-            <div className={styles.contentSection}>
-                <h1>Your Interests</h1>
-                <InterestList list={interestList} />
+            <div className={styles.contentHeader}>
+                <h2>Your Interests</h2>
+                <div className={styles.contentSection}>
+                    <InterestList list={interestList} />
+                </div>
             </div>
-            <div className={styles.contentSection}>
-                <h1>Trending Topics</h1>
+            <div className={styles.contentHeader}>
+                <h2>Trending Topics</h2>
+                <div className={styles.contentSection}>
+                    <InterestList list={interestList} />
+                </div>
             </div>
             <div className={styles.chatSection}>
                 <Stack horizontal horizontalAlign="stretch">
@@ -357,7 +362,7 @@ const Chat = () => {
                         <div className={styles.chatInput}>
                             <QuestionInput
                                 clearOnSend
-                                placeholder="Type a new question (e.g. does my plan cover annual eye exams?)"
+                                placeholder="Type a new question (e.g. How can I get help picking courses for next semester?)"
                                 disabled={isLoading}
                                 onSend={question => makeApiRequest(question)}
                             />

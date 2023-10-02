@@ -1,10 +1,22 @@
+.profileContainer {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+    padding-top: 100px;
+    padding-bottom: 50px;
+}
 .profileContainer,
 .profileContainerSelected {
     text-align: center;
-    color: #454444;
+    color: #ffffff;
     border-radius: 6px;
-    background: linear-gradient(105deg, #0093b272 46%, #0093b233 100%);
+    background: linear-gradient(105deg, #782f40 46%, #41080091 100%);
     padding: 24px;
+    font-size: 16px;
+    text-align: left;
+    padding-left: 50px;
+    padding-top: 20px;
     box-shadow:
         4px 4px 8px rgba(0, 0, 0, 0.14),
         0px 0px 4px rgba(0, 0, 0, 0.12);
@@ -12,13 +24,17 @@
 
 .profileContainerSelected {
     border: solid 4px darkgray;
-    background-color: #0094b28e;
+    background-color: #f3ede1;
 }
 
 .avatarContainer {
-    margin-top: 28px;
+    margin-top: 50px;
     margin-left: 24px;
+    margin-bottom: 50px;
     margin-right: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .infoContainer {

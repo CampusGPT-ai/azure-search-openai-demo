@@ -1,8 +1,8 @@
 .convoMenuHeader {
     border-top-left-radius: 6px;
-    background: rgb(0, 147, 178);
-    background: linear-gradient(90deg, rgba(0, 147, 178, 1) 46%, rgba(107, 185, 201, 1) 100%);
-    color: lightgrey;
+    background: #782f40;
+    background: linear-gradient(90deg, #782f40 46%, #df5b79 100%);
+    color: #fff;
 }
 
 .convoActionContainer {
@@ -18,12 +18,12 @@
 }
 
 .convoSelected {
-    background-color: #0094b2a3;
-    color: rgb(31, 31, 31);
+    background-color: #782f40;
+    color: #fff;
 }
 
 .convoHovered {
-    background: radial-gradient(circle, rgba(0, 147, 178, 0.16992734593837533) 0%, rgba(0, 147, 178, 0.5536808473389356) 100%);
+    background: radial-gradient(circle, #270f15 0%, #782f40 100%);
 }
 
 .convoUnhovered {
