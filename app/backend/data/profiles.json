@@ -30,7 +30,9 @@
         }
       ],
       "courses": [
-
+        "MAC X311", "MAC X312", "MAC X313", "CHM X045", "CHM X045L", "PHY X048C", "PHY 1090",
+        "PHY 2048C", "PHY 2049C", "PHY 3045", "PHY 3091", "PHY 3101", "PHY 3221", "PHY 4222",   
+        "PHY 4324"
       ]
     },
     {
@@ -65,7 +67,8 @@
         }
       ],
       "courses": [
-        
+          "MAC X311", "MAC X312", "MAPX302", "CHM X045/X045L", "CHM X046/X046L", 
+          "PHY X048/X048L", "PHY X049/X049L", "EEL 3135", "EEL 3705"
       ]
     },
     {
