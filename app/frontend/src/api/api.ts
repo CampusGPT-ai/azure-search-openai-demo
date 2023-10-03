@@ -1,4 +1,4 @@
-import { AskRequest, AskResponse, ChatRequest, InterestsResponse, ConversationsResponse, ProfileResponse, ProfilesResponse } from "./models";
+import { AskRequest, AskResponse, ChatRequest, InterestsResponse, ConversationsResponse, ProfileResponse, ProfilesResponse, TopicResponse } from "./models";
 
 export async function askApi(options: AskRequest): Promise<AskResponse> {
     const response = await fetch("/ask", {
@@ -76,6 +76,23 @@ export async function interestsAllApi(): Promise<InterestsResponse> {
     });
 
     const parsedResponse: InterestsResponse = await response.json();
+    if (response.status > 299 || !response.ok) {
+        throw Error(parsedResponse.error || "Unknown error");
+    }
+
+    return parsedResponse;
+}
+
+//TODO: Add topics api to python app
+export async function topicsAllApi(): Promise<TopicResponse> {
+    const response = await fetch("/interests", {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json"
+        }
+    });
+
+    const parsedResponse: TopicResponse = await response.json();
     if (response.status > 299 || !response.ok) {
         throw Error(parsedResponse.error || "Unknown error");
     }

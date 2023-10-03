@@ -12,13 +12,14 @@ import { QuestionInput } from "../../components/QuestionInput";
 import { ExampleList } from "../../components/Example";
 import { UserChatMessage } from "../../components/UserChatMessage";
 import { AnalysisPanel, AnalysisPanelTabs } from "../../components/AnalysisPanel";
-import { ConversationsResponse, ConversationsModel, ChatHistoryMessageModel } from "../../api";
+import { ConversationsResponse, ConversationsModel, ChatHistoryMessageModel, TopicResponse } from "../../api";
 import { conversationsApi } from "../../api";
-import { interestsAllApi, currentProfileApi } from "../../api";
-import { InterestsResponse, InterestModel, ProfileModel } from "../../api";
+import { interestsAllApi, currentProfileApi, topicsAllApi } from "../../api";
+import { InterestsResponse, InterestModel, TopicModel, ProfileModel } from "../../api";
 
 import styles from "./Chat.module.css";
 import { InterestList } from "../../components/Interests/InterestList";
+import { TopicList } from "../../components/Topics/TopicList";
 import { UserConversations } from "../../components/UserChatHistory/UserConversations";
 
 const Chat = () => {
@@ -46,7 +47,7 @@ const Chat = () => {
 
     const [conversations, setConversations] = useState<ConversationsResponse | undefined>(undefined);
     const [interests, setInterests] = useState<InterestsResponse | undefined>(undefined);
-
+    const [topics, setTopics] = useState<TopicResponse | undefined>(undefined);
     const [isNewConversation, setIsNewConversation] = useState<boolean>(getLocalStorage<boolean>("isNewConversation") || false);
     const [conversationId, setConversationId] = useState<string>(getLocalStorage<string>("conversationId") || uuid().toString());
     const [activeConversation, setActiveConversation] = useState<ConversationsModel | null>(null);
@@ -144,6 +145,7 @@ const Chat = () => {
         setIsNewConversation(true);
         clearChat();
         makeConversationsApiRequest();
+        makeTopicApiRequest();
         makeInterestApiRequest();
     }, [currentUser]);
 
@@ -268,6 +270,18 @@ const Chat = () => {
         }
     };
 
+    const makeTopicApiRequest = async () => {
+        setIsLoading(true);
+        try {
+            const result = await topicsAllApi();
+            setTopics(result);
+        } catch (e) {
+            setError(e);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     const startNewChat = () => {
         console.log("Starting new chat");
         clearChat();
@@ -286,6 +300,9 @@ const Chat = () => {
     let interestList: Array<InterestModel> = [];
     if (interests?.list) interestList = interests.list;
 
+    let topicList: Array<TopicModel> = [];
+    if (topics?.list) topicList = topics.list;
+
     let conversationsList: Array<ConversationsModel> = [];
     if (conversations?.list) conversationsList = conversations.list;
 
@@ -300,7 +317,7 @@ const Chat = () => {
             <div className={styles.contentHeader}>
                 <h2>Trending Topics</h2>
                 <div className={styles.contentSection}>
-                    <InterestList list={interestList} />
+                    <TopicList list={topicList} />
                 </div>
             </div>
             <div className={styles.chatSection}>

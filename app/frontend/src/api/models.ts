@@ -62,6 +62,15 @@ export type InterestsResponse = {
     error?: string;
 };
 
+export type TopicModel = {
+    topic: string;
+};
+
+export type TopicResponse = {
+    list: Array<TopicModel>;
+    error?: string;
+};
+
 export type ChatHistoryMessageModel = {
     timestamp: string;
     user: string;
