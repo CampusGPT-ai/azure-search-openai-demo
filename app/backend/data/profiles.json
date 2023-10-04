@@ -23,7 +23,7 @@
           "Academic Year": "3"
         },
         {
-          "Major": "English"
+          "Major": "Physics"
         },
         {
           "Minor": "History"
@@ -52,7 +52,7 @@
           "Ethnicity": "White"
         },
         {
-          "Gender": "Female"
+          "Gender": "Computer Engineer"
         }
       ],
       "academics": [
@@ -63,7 +63,7 @@
           "Major": "Physics"
         },
         {
-          "Minor": "Mathematics"
+          "Minor": ""
         }
       ],
       "courses": [
@@ -93,13 +93,13 @@
       ],
       "academics": [
         {
-          "Academic Year": "2"
+          "Academic Year": "1"
         },
         {
-          "Major": "Physics"
+          "Major": "Business Administration" 
         },
         {
-          "Minor": "Mathematics"
+          "Minor": ""
         }
       ],
       "courses": [
