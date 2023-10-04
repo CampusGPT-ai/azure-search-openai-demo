@@ -33,6 +33,7 @@ from approaches.readdecomposeask import ReadDecomposeAsk
 from approaches.readretrieveread import ReadRetrieveReadApproach
 from approaches.retrievethenread import RetrieveThenReadApproach
 from profile.interest import Interest
+from profile.tqi import Topic
 from profile.profile import Profile
 from profile.profile_loader import ProfileLoader
 from profile.institution import Institution
@@ -92,7 +93,7 @@ async def ask():
         async with aiohttp.ClientSession() as s:
             openai.aiosession.set(s)
             r = await impl.run(request_json["question"], request_json.get("overrides") or {})
-        return jsonify(r)
+        return jsonify(r), 200
     except Exception as e:
         logging.exception("Exception in /ask")
         return jsonify({"error": str(e)}), 500
@@ -121,6 +122,14 @@ async def get_all_interests() :
     data = Interest.loadAllInterests()
     return jsonify({"list": list(map(lambda x: x.to_json(), data))})
 
+@bp.route("/topics", methods=["GET"])
+async def get_topics() :
+    try: 
+        data = Topic.topic()
+        return  jsonify(data), 200
+    except Exception as e: 
+        logging.exception("Exception in /topics")
+        return jsonify({"error": str(e)}), 500
 
 @bp.route("/conversations", methods=["GET"])
 async def get_conversations():

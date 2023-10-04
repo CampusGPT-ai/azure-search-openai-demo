@@ -1,13 +1,19 @@
 import React from "react";
-import { ProfileModel } from "./api/models";
+import { ProfileModel, TopicModel } from "./api/models";
 
 // Initial context state
-const initialState = {
+const initialUserState = {
     user: null as ProfileModel | null,
     setUser: (_user: ProfileModel | null) => {}
 };
 
-// Create the context
-const UserContext = React.createContext(initialState);
+const initialTopicState = {
+    topics: [] as TopicModel[],
+    setTopics: (_topics: TopicModel[]) => {}
+};
 
-export default UserContext;
+// Create the context
+const UserContext = React.createContext(initialUserState);
+const TopicContext = React.createContext(initialTopicState);
+
+export { UserContext, TopicContext };

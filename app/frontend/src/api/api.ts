@@ -45,7 +45,7 @@ export async function interestsAllApi(): Promise<InterestsResponse> {
 
 //TODO: Add topics api to python app
 export async function topicsAllApi(): Promise<TopicResponse> {
-    const response = await fetch("/interests", {
+    const response = await fetch("/topics", {
         method: "GET",
         headers: {
             "Content-Type": "application/json"

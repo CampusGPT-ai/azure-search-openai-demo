@@ -2,8 +2,9 @@ import { useRef, useState, useEffect, useContext } from "react";
 import { getLocalStorage, setLocalStorage } from "../../utilities/stateManagement";
 import { v4 as uuid } from "uuid";
 import { Stack, StackItem } from "@fluentui/react";
-import UserContext from "../../contextVariables";
+import { UserContext, TopicContext } from "../../contextVariables";
 import ChatContainer from "../../components/ChatContainer/chatContainer";
+import { getDistinctTopics } from "../../components/Topics/TopicUtilities";
 import CitationDrawer from "../../components/Citation/citationDrawer";
 import {
     AskResponse,
@@ -27,8 +28,11 @@ import styles from "./Chat.module.css";
 
 const Chat = () => {
     const { user } = useContext(UserContext);
+    const { topics } = useContext(TopicContext);
+
     let interestsAsModel: InterestModel[] = [];
 
+    // Map user interests
     if (user && user.interests) {
         interestsAsModel = user.interests.map(interest => ({
             interest,
@@ -36,8 +40,35 @@ const Chat = () => {
         }));
     }
 
-    let topicsAsList: string[] = ["test1", "test2", "test3"];
-    let topicsAsModel: TopicModel[] = topicsAsList.map(topic => ({ topic }));
+    // Append major and minor from academics
+    if (user && user.academics) {
+        const major = user.academics.get("major");
+        const minor = user.academics.get("minor");
+        if (major) {
+            interestsAsModel.push({
+                interest: major + " major",
+                selected: false
+            });
+        }
+        if (minor) {
+            interestsAsModel.push({
+                interest: minor + " minor",
+                selected: false
+            });
+        }
+    }
+
+    // Append ethnicity from demographics
+    if (user && user.demographics) {
+        const ethnicity = user.demographics.get("ethnicity");
+        if (ethnicity) {
+            interestsAsModel.push({
+                interest: ethnicity + " ethnicity",
+                selected: false
+            });
+        }
+    }
+    const distinctTopics = getDistinctTopics(topics);
 
     const [isCitationPanelOpen, setIsCitationPanelOpen] = useState(false);
 
@@ -52,23 +83,10 @@ const Chat = () => {
     const [answers, setAnswers] = useState<[user: string, response: AskResponse][]>([]);
 
     const [conversations, setConversations] = useState<ConversationsResponse | undefined>(undefined);
-    const [topics, setTopics] = useState<TopicResponse | undefined>(undefined);
     const [isNewConversation, setIsNewConversation] = useState<boolean>(getLocalStorage<boolean>("isNewConversation") || false);
     const [conversationId, setConversationId] = useState<string>(getLocalStorage<string>("conversationId") || uuid().toString());
     const [activeConversation, setActiveConversation] = useState<ConversationsModel | null>(null);
     const [currentUser, setCurrentUser] = useState<ProfileModel | null>(null);
-
-    const makeTopicApiRequest = async () => {
-        setIsLoading(true);
-        try {
-            const result = await topicsAllApi();
-            setTopics(result);
-        } catch (e) {
-            setError(e);
-        } finally {
-            setIsLoading(false);
-        }
-    };
 
     const makeConversationsApiRequest = async () => {
         setIsLoading(true);
@@ -133,7 +151,6 @@ const Chat = () => {
         setIsNewConversation(true);
         clearChat();
         makeConversationsApiRequest();
-        makeTopicApiRequest();
     }, [currentUser]);
 
     const clearChat = () => {
@@ -201,11 +218,6 @@ const Chat = () => {
         setLocalStorage("isNewChat", isNewConversation);
     }, [isNewConversation]);
 
-    let topicList: Array<TopicModel> = [];
-    if (topics?.list) {
-        topicList = topics.list;
-    }
-
     let conversationsList: Array<ConversationsModel> = [];
     if (conversations?.list) {
         conversationsList = conversations.list;
@@ -222,7 +234,7 @@ const Chat = () => {
             <div className={styles.contentHeader}>
                 <h2>Trending Topics</h2>
                 <div className={styles.contentSection}>
-                    <TopicList list={topicsAsModel} />
+                    <TopicList list={distinctTopics} />
                 </div>
             </div>
             <div className={styles.chatSection}>

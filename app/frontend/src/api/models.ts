@@ -41,7 +41,11 @@ export type InterestsResponse = {
 };
 
 export type TopicModel = {
+    id: string;
     topic: string;
+    question: string;
+    answer: string;
+    related_interests: Array<string>;
 };
 
 export type TopicResponse = {

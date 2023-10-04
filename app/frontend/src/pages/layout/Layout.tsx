@@ -4,15 +4,16 @@ import { Persona, Subtitle2 } from "@fluentui/react-components";
 import seal from "../../assets/fsu-seal-3d-160x160.png";
 import avatar from "../../assets/avatars/reinhold.png";
 import { Image, ImageFit } from "@fluentui/react";
-import UserContext from "../../contextVariables";
+import { UserContext, TopicContext } from "../../contextVariables";
 
 import styles from "./Layout.module.css";
-import { ProfileModel, currentProfileApi } from "../../api";
+import { ProfileModel, TopicModel, currentProfileApi, topicsAllApi } from "../../api";
 import dylan from "../../assets/avatars/dylan.png";
 import jamal from "../../assets/avatars/jamal.png";
 import tiffany from "../../assets/avatars/tiffany.png";
 //TODO: serve images from API
 import { FluentProvider, teamsLightTheme, BrandVariants, Theme, createDarkTheme, createLightTheme } from "@fluentui/react-components";
+import { resultItem } from "@fluentui/react/lib/components/ExtendedPicker/PeoplePicker/ExtendedPeoplePicker.scss";
 
 const avatarImages: Record<string, string> = {
     dylan,
@@ -58,6 +59,7 @@ const Layout = () => {
     log it
     */
     const { setUser } = useContext(UserContext);
+    const { setTopics } = useContext(TopicContext);
     const [loggedInUser, setLoggedInUser] = useState<ProfileModel | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [error, setError] = useState<unknown>();
@@ -75,8 +77,22 @@ const Layout = () => {
         }
     };
 
-    useEffect(() => {
+    const makeTopicApiRequest = async () => {
+        setIsLoading(true);
+        try {
+            const result = await topicsAllApi();
+            setTopics(result.list);
+            console.log("got topics from API: " + result);
+        } catch (e) {
+            setError(e);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const getProfileApiRequest = useEffect(() => {
         makeCurrentUserApiRequest();
+        makeTopicApiRequest();
     }, []);
 
     useEffect(() => {
