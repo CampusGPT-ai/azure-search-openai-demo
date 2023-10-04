@@ -6,6 +6,15 @@ import { AskResponse } from "../../api";
 
 import styles from "./ChatHistoryMessage.module.css";
 
+/***
+ * ChatHistoryMessageModel = {
+    timestamp: string;
+    user: string;
+    bot: string;
+};
+
+ */
+
 interface Props {
     index: number;
     message: ChatHistoryMessageModel;
@@ -21,19 +30,7 @@ export const ChatHistoryMessage = ({ index, message, onCitationClicked }: Props)
                 <Body1Strong>{message.user}</Body1Strong>
             </AccordionHeader>
             <AccordionPanel className={styles.container}>
-                <Answer
-                    key={index}
-                    answer={askResponse}
-                    isSelected={true}
-                    onCitationClicked={onCitationClicked}
-                    onThoughtProcessClicked={() => {
-                        void 0;
-                    }}
-                    onSupportingContentClicked={() => {
-                        void 0;
-                    }}
-                    showFollowupQuestions={false}
-                />
+                <Answer key={index} answer={askResponse} onCitationClicked={onCitationClicked} showFollowupQuestions={false} />
             </AccordionPanel>
         </AccordionItem>
     );

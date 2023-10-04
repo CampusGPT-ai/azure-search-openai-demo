@@ -1,0 +1,64 @@
+/* This retains its specificity */
+.convoMenuHeader {
+    border-top-left-radius: 6px;
+    background: #782f40;
+    background: linear-gradient(90deg, #782f40 46%, #df5b79 100%);
+    color: #fff;
+}
+
+/* Increase specificity by targeting direct children of a class */
+.convoMenuHeader > .convoActionContainer {
+    display: flex;
+
+    margin: 10px 10px 10px 30px;
+}
+
+.btnLabel {
+    display: block;
+    text-align: left;
+    width: 100%;
+    font-weight: "bold";
+    font-size: "14px";
+}
+
+.convoMenuHeader > .convoHeaderContainer {
+    display: flex;
+
+    margin-left: 8px;
+}
+
+/* Targeting Fluent UI buttons within specific contexts */
+.convoButtonGroup .convoButton.ms-Button {
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+
+.convoButtonGroup .convoButton.convoSelected.ms-Button {
+    background-color: #782f40;
+    color: #fff;
+}
+
+.convoButtonGroup .convoButton.convoHovered.ms-Button {
+    background: radial-gradient(circle, #270f15 0%, #782f40 100%);
+}
+
+.convoButtonGroup .convoButton.convoUnhovered.ms-Button {
+    background-color: transparent;
+}
+
+/* This retains its specificity */
+.convoButtonGroup {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
+
+/* Adding styles for icons and labels with more specificity */
+.convoButtonGroup .convoButton.ms-Button .convoMenuIconPadding {
+    padding-left: 12px;
+}
+
+.convoButtonGroup .convoButton.ms-Button .labelPadding {
+    padding-left: 8px;
+}

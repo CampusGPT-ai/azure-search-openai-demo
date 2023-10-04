@@ -2,7 +2,7 @@
     {
         "id": "e4d1c173-e807-49f0-af20-f61ba9541cbb",
         "question": "how can i contact jennifer farinella?",
-        "new topic": "Contacting Jennifer Farinella",
+        "topic": "Contacting Jennifer Farinella",
         "start_time": "1695310087",
         "_self": "dbs/cv8wAA==/colls/cv8wAIw6Z1E=/docs/cv8wAIw6Z1ETAAAAAAAAAA==/",
         "_rid": "cv8wAIw6Z1ETAAAAAAAAAA==",
@@ -17,7 +17,7 @@
     {
         "id": "8c0969b5-7cb5-4e91-aef2-c84562313685",
         "question": "how can i contact Nina Davis?",
-        "new topic": "Contacting Nina Davis",
+        "topic": "Contacting Nina Davis",
         "start_time": "1695308026",
         "_self": "dbs/cv8wAA==/colls/cv8wAIw6Z1E=/docs/cv8wAIw6Z1ESAAAAAAAAAA==/",
         "_rid": "cv8wAIw6Z1ESAAAAAAAAAA==",
@@ -32,7 +32,7 @@
     {
         "id": "6cc1f1fa-e228-48d2-93fb-78327a9a62fa",
         "question": "How can I get help with financial aid?",
-        "new topic": "Financial Aid Assistance",
+        "topic": "Financial Aid Assistance",
         "start_time": "1695272011",
         "_self": "dbs/cv8wAA==/colls/cv8wAIw6Z1E=/docs/cv8wAIw6Z1ENAAAAAAAAAA==/",
         "_rid": "cv8wAIw6Z1ENAAAAAAAAAA==",
@@ -47,7 +47,7 @@
     {
         "id": "48404d09-4e1b-4910-860d-a4e4f8716973",
         "question": "where is the office of Mark Spieker located?",
-        "new topic": "Mark Spieker's Office Location",
+        "topic": "Mark Spieker's Office Location",
         "start_time": "1695310887",
         "_self": "dbs/cv8wAA==/colls/cv8wAIw6Z1E=/docs/cv8wAIw6Z1EUAAAAAAAAAA==/",
         "_rid": "cv8wAIw6Z1EUAAAAAAAAAA==",
@@ -62,7 +62,7 @@
     {
         "id": "f026b04c-4299-477e-87fe-abce3e19e677",
         "question": "what math classes are offered this semester?",
-        "new topic": "Math classes offered this semester",
+        "topic": "Math classes offered this semester",
         "start_time": "1695403011",
         "_self": "dbs/cv8wAA==/colls/cv8wAIw6Z1E=/docs/cv8wAIw6Z1EZAAAAAAAAAA==/",
         "_rid": "cv8wAIw6Z1EZAAAAAAAAAA==",
@@ -77,7 +77,7 @@
     {
         "id": "a5fffacd-b864-4b01-9d5a-b3e6ab08e306",
         "question": "what is myFSU?",
-        "new topic": "myFSU Portal Information",
+        "topic": "myFSU Portal Information",
         "start_time": "1695337305",
         "_self": "dbs/cv8wAA==/colls/cv8wAIw6Z1E=/docs/cv8wAIw6Z1EVAAAAAAAAAA==/",
         "_rid": "cv8wAIw6Z1EVAAAAAAAAAA==",
@@ -92,7 +92,7 @@
     {
         "id": "9bb6e6b2-540b-4fd1-9811-2c3b7ea6b950",
         "question": "How can I get help picking courses for next semester?",
-        "new topic": "Advising First Program",
+        "topic": "Advising First Program",
         "start_time": "1695879632",
         "_self": "dbs/cv8wAA==/colls/cv8wAIw6Z1E=/docs/cv8wAIw6Z1EgAAAAAAAAAA==/",
         "_rid": "cv8wAIw6Z1EgAAAAAAAAAA==",
@@ -107,7 +107,7 @@
     {
         "id": "3e87e8a7-750d-4ee5-8fbe-018dd5227916",
         "question": "Who are the advisors for physics?",
-        "new topic": "Physics Advising",
+        "topic": "Physics Advising",
         "start_time": "1695849145",
         "_self": "dbs/cv8wAA==/colls/cv8wAIw6Z1E=/docs/cv8wAIw6Z1EbAAAAAAAAAA==/",
         "_rid": "cv8wAIw6Z1EbAAAAAAAAAA==",
@@ -122,7 +122,7 @@
     {
         "id": "51b46826-8afb-4dcf-805c-5a7e8bc16ba9",
         "question": "What is SWE?",
-        "new topic": "SWE",
+        "topic": "SWE",
         "start_time": "1696111004",
         "_self": "dbs/cv8wAA==/colls/cv8wAIw6Z1E=/docs/cv8wAIw6Z1EuAAAAAAAAAA==/",
         "_rid": "cv8wAIw6Z1EuAAAAAAAAAA==",
@@ -137,7 +137,7 @@
     {
         "id": "7919ed82-430d-47f4-92ad-c2ce7a302da5",
         "question": "What are the eligibility criteria for financial aid?",
-        "new topic": "Unconquered Scholars Program",
+        "topic": "Unconquered Scholars Program",
         "start_time": "1696110710",
         "_self": "dbs/cv8wAA==/colls/cv8wAIw6Z1E=/docs/cv8wAIw6Z1ErAAAAAAAAAA==/",
         "_rid": "cv8wAIw6Z1ErAAAAAAAAAA==",
@@ -152,7 +152,7 @@
     {
         "id": "7873d50a-0ce4-4565-876c-5e5c63669e5d",
         "question": "when is orientation?",
-        "new topic": "Orientation schedule",
+        "topic": "Orientation schedule",
         "start_time": "1695876312",
         "_self": "dbs/cv8wAA==/colls/cv8wAIw6Z1E=/docs/cv8wAIw6Z1EeAAAAAAAAAA==/",
         "_rid": "cv8wAIw6Z1EeAAAAAAAAAA==",
@@ -167,7 +167,7 @@
     {
         "id": "696f269c-3560-47f3-8392-51f1a4ff2d9c",
         "question": "What is SWE?",
-        "new topic": "SWE",
+        "topic": "SWE",
         "start_time": "1696110980",
         "_self": "dbs/cv8wAA==/colls/cv8wAIw6Z1E=/docs/cv8wAIw6Z1EtAAAAAAAAAA==/",
         "_rid": "cv8wAIw6Z1EtAAAAAAAAAA==",
@@ -182,7 +182,7 @@
     {
         "id": "c0aeaff2-4f05-4433-9365-3377904d7930",
         "question": "How can I get help picking courses for next semester?",
-        "new topic": "Choosing Courses",
+        "topic": "Choosing Courses",
         "start_time": "1696278510",
         "_self": "dbs/cv8wAA==/colls/cv8wAIw6Z1E=/docs/cv8wAIw6Z1E2AAAAAAAAAA==/",
         "_rid": "cv8wAIw6Z1E2AAAAAAAAAA==",
@@ -197,7 +197,7 @@
     {
         "id": "0ec31bb4-50a0-4c18-8e83-23ee70c2ba6a",
         "question": "how can i contact the CARE financial aid specialist?",
-        "new topic": "Contacting CARE Financial Aid Specialist",
+        "topic": "Contacting CARE Financial Aid Specialist",
         "start_time": "1695850592",
         "_self": "dbs/cv8wAA==/colls/cv8wAIw6Z1E=/docs/cv8wAIw6Z1EdAAAAAAAAAA==/",
         "_rid": "cv8wAIw6Z1EdAAAAAAAAAA==",
@@ -212,7 +212,7 @@
     {
         "id": "6a4942e3-e59d-434c-ae56-2beb807a1507",
         "question": "how can i check my financial aid status?",
-        "new topic": "Financial Aid Status",
+        "topic": "Financial Aid Status",
         "start_time": "1695272819",
         "_self": "dbs/cv8wAA==/colls/cv8wAIw6Z1E=/docs/cv8wAIw6Z1EQAAAAAAAAAA==/",
         "_rid": "cv8wAIw6Z1EQAAAAAAAAAA==",

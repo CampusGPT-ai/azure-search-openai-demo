@@ -1,37 +1,44 @@
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useContext } from "react";
 import { getLocalStorage, setLocalStorage } from "../../utilities/stateManagement";
 import { v4 as uuid } from "uuid";
-import { Checkbox, Panel, DefaultButton, TextField, SpinButton, Dropdown, IDropdownOption, Stack, StackItem } from "@fluentui/react";
-import { Drawer, DrawerOverlay, DrawerBody, DrawerHeader, DrawerHeaderTitle } from "@fluentui/react-components/unstable";
-import { Dismiss24Regular } from "@fluentui/react-icons";
-import { Button } from "@fluentui/react-components";
+import { Stack, StackItem } from "@fluentui/react";
+import UserContext from "../../contextVariables";
+import ChatContainer from "../../components/ChatContainer/chatContainer";
+import CitationDrawer from "../../components/Citation/citationDrawer";
+import {
+    AskResponse,
+    chatApi,
+    ConversationsResponse,
+    conversationsApi,
+    ConversationsModel,
+    //InterestsResponse,
+    InterestModel,
+    TopicModel,
+    ProfileModel,
+    //interestsAllApi,
+    currentProfileApi,
+    topicsAllApi,
+    TopicResponse
+} from "../../api";
 
-import { chatApi, RetrievalMode, Approaches, AskResponse, ChatRequest, ChatTurn } from "../../api";
-import { Answer, AnswerError, AnswerLoading } from "../../components/Answer";
-import { QuestionInput } from "../../components/QuestionInput";
-import { ExampleList } from "../../components/Example";
-import { UserChatMessage } from "../../components/UserChatMessage";
-import { AnalysisPanel, AnalysisPanelTabs } from "../../components/AnalysisPanel";
-import { ConversationsResponse, ConversationsModel, ChatHistoryMessageModel, TopicResponse } from "../../api";
-import { conversationsApi } from "../../api";
-import { interestsAllApi, currentProfileApi, topicsAllApi } from "../../api";
-import { InterestsResponse, InterestModel, TopicModel, ProfileModel } from "../../api";
-
-import styles from "./Chat.module.css";
 import { InterestList } from "../../components/Interests/InterestList";
 import { TopicList } from "../../components/Topics/TopicList";
-import { UserConversations } from "../../components/UserChatHistory/UserConversations";
+import { UserConversations } from "../../components/UserChatHistory/UserConversationsRedo";
+
+import styles from "./Chat.module.css";
 
 const Chat = () => {
-    const [isConfigPanelOpen, setIsConfigPanelOpen] = useState(false);
+    const { user } = useContext(UserContext);
+    let interestsAsModel: InterestModel[] = [];
+
+    if (user && user.interests) {
+        interestsAsModel = user.interests.map(interest => ({
+            interest,
+            selected: false
+        }));
+    }
+
     const [isCitationPanelOpen, setIsCitationPanelOpen] = useState(false);
-    const [promptTemplate, setPromptTemplate] = useState<string>("");
-    const [retrieveCount, setRetrieveCount] = useState<number>(3);
-    const [retrievalMode, setRetrievalMode] = useState<RetrievalMode>(RetrievalMode.Hybrid);
-    const [useSemanticRanker, setUseSemanticRanker] = useState<boolean>(true);
-    const [useSemanticCaptions, setUseSemanticCaptions] = useState<boolean>(false);
-    const [excludeCategory, setExcludeCategory] = useState<string>("");
-    const [useSuggestFollowupQuestions, setUseSuggestFollowupQuestions] = useState<boolean>(false);
 
     const lastQuestionRef = useRef<string>("");
     const chatMessageStreamEnd = useRef<HTMLDivElement | null>(null);
@@ -40,67 +47,34 @@ const Chat = () => {
     const [error, setError] = useState<unknown>();
 
     const [activeCitation, setActiveCitation] = useState<string>();
-    const [activeAnalysisPanelTab, setActiveAnalysisPanelTab] = useState<AnalysisPanelTabs | undefined>(undefined);
 
-    const [selectedAnswer, setSelectedAnswer] = useState<number>(0);
     const [answers, setAnswers] = useState<[user: string, response: AskResponse][]>([]);
 
     const [conversations, setConversations] = useState<ConversationsResponse | undefined>(undefined);
-    const [interests, setInterests] = useState<InterestsResponse | undefined>(undefined);
+    //const [interests, setInterests] = useState<InterestsResponse | undefined>(undefined);
     const [topics, setTopics] = useState<TopicResponse | undefined>(undefined);
     const [isNewConversation, setIsNewConversation] = useState<boolean>(getLocalStorage<boolean>("isNewConversation") || false);
     const [conversationId, setConversationId] = useState<string>(getLocalStorage<string>("conversationId") || uuid().toString());
     const [activeConversation, setActiveConversation] = useState<ConversationsModel | null>(null);
     const [currentUser, setCurrentUser] = useState<ProfileModel | null>(null);
 
-    const makeApiRequest = async (question: string) => {
-        console.log("Asking question: " + question);
-        console.log("Conversation id: " + conversationId);
-        if (isNewConversation) console.log("Starting a new conversation...");
+    //const makeInterestApiRequest = async () => {
+    //    setIsLoading(true);
+    //    try {
+    //        const result = await interestsAllApi();
+    //        setInterests(result);
+    //    } catch (e) {
+    //        setError(e);
+    //    } finally {
+    //        setIsLoading(false);
+    //    }
+    //};
 
-        console.log("Making API call to OpenAI...");
-
-        lastQuestionRef.current = question;
-
-        error && setError(undefined);
+    const makeTopicApiRequest = async () => {
         setIsLoading(true);
-        setActiveCitation(undefined);
-        setActiveAnalysisPanelTab(undefined);
-
         try {
-            const history: ChatTurn[] = answers.map(a => ({ user: a[0], bot: a[1].answer }));
-            const request: ChatRequest = {
-                history: [...history, { user: question, bot: undefined }],
-                approach: Approaches.ReadRetrieveRead,
-                overrides: {
-                    conversationId: conversationId,
-                    isNewConversation: isNewConversation,
-                    promptTemplate: promptTemplate.length === 0 ? undefined : promptTemplate,
-                    excludeCategory: excludeCategory.length === 0 ? undefined : excludeCategory,
-                    top: retrieveCount,
-                    retrievalMode: retrievalMode,
-                    semanticRanker: useSemanticRanker,
-                    semanticCaptions: useSemanticCaptions,
-                    suggestFollowupQuestions: true
-                }
-            };
-            const result = await chatApi(request);
-            setAnswers([...answers, [question, result]]);
-            setConversationId(result.conversation_id);
-
-            if (isNewConversation) {
-                console.log("Received response, including new conversation title, setting title: " + result.conversation_topic);
-                const convo: ConversationsModel = {
-                    id: conversationId,
-                    topic: result.conversation_topic,
-                    start_time: Date.now().toString(),
-                    end_time: "",
-                    interactions: []
-                };
-                conversations?.list.unshift(convo);
-                //setActiveConversation(convo);
-            }
-            setIsNewConversation(false);
+            const result = await topicsAllApi();
+            setTopics(result);
         } catch (e) {
             setError(e);
         } finally {
@@ -133,83 +107,62 @@ const Chat = () => {
         }
     };
 
+    const makeApiRequest = async (question: string) => {
+        try {
+            const result = await chatApi(question, answers, conversationId, isNewConversation);
+            setAnswers([...answers, [question, result]]);
+            setConversationId(result.conversation_id);
+
+            if (isNewConversation) {
+                console.log("Received response, including new conversation title, setting title: " + result.conversation_topic);
+                const convo: ConversationsModel = {
+                    id: conversationId,
+                    topic: result.conversation_topic,
+                    start_time: Date.now().toString(),
+                    end_time: "",
+                    interactions: []
+                };
+                conversations?.list.unshift(convo);
+                setIsNewConversation(false);
+            }
+        } catch (e) {
+            setError(e);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     useEffect(() => {
+        console.log("getting current user");
         makeCurrentUserApiRequest();
         chatMessageStreamEnd.current?.scrollIntoView({ behavior: "smooth" }), [isLoading];
     }, []);
 
     useEffect(() => {
+        console.log("Setting State Variables");
         setConversationId(uuid().toString());
         setConversations(undefined);
-        setInterests(undefined);
+        //setInterests(undefined);
         setIsNewConversation(true);
         clearChat();
         makeConversationsApiRequest();
         makeTopicApiRequest();
-        makeInterestApiRequest();
+        //makeInterestApiRequest();
     }, [currentUser]);
 
     const clearChat = () => {
         lastQuestionRef.current = "";
         error && setError(undefined);
         setActiveCitation(undefined);
-        setActiveAnalysisPanelTab(undefined);
         setAnswers([]);
     };
 
-    const onPromptTemplateChange = (_ev?: React.FormEvent<HTMLInputElement | HTMLTextAreaElement>, newValue?: string) => {
-        setPromptTemplate(newValue || "");
-    };
-
-    const onRetrieveCountChange = (_ev?: React.SyntheticEvent<HTMLElement, Event>, newValue?: string) => {
-        setRetrieveCount(parseInt(newValue || "3"));
-    };
-
-    const onRetrievalModeChange = (_ev: React.FormEvent<HTMLDivElement>, option?: IDropdownOption<RetrievalMode> | undefined, index?: number | undefined) => {
-        setRetrievalMode(option?.data || RetrievalMode.Hybrid);
-    };
-
-    const onUseSemanticRankerChange = (_ev?: React.FormEvent<HTMLElement | HTMLInputElement>, checked?: boolean) => {
-        setUseSemanticRanker(!!checked);
-    };
-
-    const onUseSemanticCaptionsChange = (_ev?: React.FormEvent<HTMLElement | HTMLInputElement>, checked?: boolean) => {
-        setUseSemanticCaptions(!!checked);
-    };
-
-    const onExcludeCategoryChanged = (_ev?: React.FormEvent, newValue?: string) => {
-        setExcludeCategory(newValue || "");
-    };
-
-    const onUseSuggestFollowupQuestionsChange = (_ev?: React.FormEvent<HTMLElement | HTMLInputElement>, checked?: boolean) => {
-        setUseSuggestFollowupQuestions(!!checked);
-    };
-
-    const onExampleClicked = (example: string) => {
-        makeApiRequest(example);
-    };
-
-    const onDrawerClose = (closed: boolean) => {
-        setIsCitationPanelOpen(closed);
-    };
-
-    const onShowCitation = (citation: string, index: number) => {
-        if (activeCitation === citation && selectedAnswer === index) {
-            setActiveAnalysisPanelTab(undefined);
-            setIsCitationPanelOpen(false);
-        } else {
-            setActiveCitation(citation);
-            setIsCitationPanelOpen(true);
-        }
-
-        setSelectedAnswer(index);
-    };
-
-    const onShowCitationFromHistory = (citation: string) => {
+    const onShowCitation = (citation: string) => {
         if (activeCitation === citation) {
             setIsCitationPanelOpen(false);
         } else {
             setActiveCitation(citation);
+            console.log("citation set to " + activeCitation);
             setIsCitationPanelOpen(true);
         }
     };
@@ -217,13 +170,12 @@ const Chat = () => {
     const onConversationSelected = (conversationId: string) => {
         console.log("Conversation selected: id=" + conversationId);
         if (conversations != null) {
-            conversations.list.forEach(el => {
-                if (el.id == conversationId) {
-                    console.log("Found conversation with topic: " + el.topic);
-                    setActiveConversation(el);
-                    setConversationId(el.id);
-                }
-            });
+            const matchingConversation = conversations.list.find(el => el.id === conversationId);
+            if (matchingConversation) {
+                console.log("Found conversation with topic: " + matchingConversation.topic);
+                setActiveConversation(matchingConversation);
+                setConversationId(matchingConversation.id);
+            }
         }
     };
 
@@ -248,40 +200,6 @@ const Chat = () => {
         setAnswers(answers.reverse().map(x => [x[0], JSON.parse(x[1])]));
     }, [activeConversation]);
 
-    const onToggleTab = (tab: AnalysisPanelTabs, index: number) => {
-        if (activeAnalysisPanelTab === tab && selectedAnswer === index) {
-            setActiveAnalysisPanelTab(undefined);
-        } else {
-            setActiveAnalysisPanelTab(tab);
-        }
-
-        setSelectedAnswer(index);
-    };
-
-    const makeInterestApiRequest = async () => {
-        setIsLoading(true);
-        try {
-            const result = await interestsAllApi();
-            setInterests(result);
-        } catch (e) {
-            setError(e);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const makeTopicApiRequest = async () => {
-        setIsLoading(true);
-        try {
-            const result = await topicsAllApi();
-            setTopics(result);
-        } catch (e) {
-            setError(e);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
     const startNewChat = () => {
         console.log("Starting new chat");
         clearChat();
@@ -297,21 +215,27 @@ const Chat = () => {
         setLocalStorage("isNewChat", isNewConversation);
     }, [isNewConversation]);
 
-    let interestList: Array<InterestModel> = [];
-    if (interests?.list) interestList = interests.list;
+    //let interestList: Array<InterestModel> = [];
+    //if (interests?.list) {
+    //    interestList = interests.list;
+    //}
 
     let topicList: Array<TopicModel> = [];
-    if (topics?.list) topicList = topics.list;
+    if (topics?.list) {
+        topicList = topics.list;
+    }
 
     let conversationsList: Array<ConversationsModel> = [];
-    if (conversations?.list) conversationsList = conversations.list;
+    if (conversations?.list) {
+        conversationsList = conversations.list;
+    }
 
     return (
         <div className={styles.container}>
             <div className={styles.contentHeader}>
                 <h2>Your Interests</h2>
                 <div className={styles.contentSection}>
-                    <InterestList list={interestList} />
+                    <InterestList list={interestsAsModel} />
                 </div>
             </div>
             <div className={styles.contentHeader}>
@@ -323,153 +247,26 @@ const Chat = () => {
             <div className={styles.chatSection}>
                 <Stack horizontal horizontalAlign="stretch">
                     <StackItem className={styles.chatHistoryContainer} disableShrink>
-                        <UserConversations
+                        <UserConversations //chat history
                             conversations={conversationsList}
-                            onCitationClicked={c => onShowCitationFromHistory(c)}
                             onConversationClicked={onConversationSelected}
                             onNewChatClicked={() => startNewChat()}
                         />
                     </StackItem>
                     <StackItem className={styles.chatInputContainer}>
-                        <h2>What's on your mind today?</h2>
-                        {!lastQuestionRef.current ? (
-                            <div className={styles.chatEmptyState}>
-                                <h3 className={styles.chatEmptyStateSubtitle}>Ask a question in chat or try one of the examples to get started</h3>
-                                <ExampleList onExampleClicked={onExampleClicked} />
-                            </div>
-                        ) : (
-                            <div className={styles.chatMessageStream}>
-                                {answers.map((answer, index) => (
-                                    <div key={index}>
-                                        <UserChatMessage message={answer[0]} />
-                                        <div className={styles.chatMessageGpt}>
-                                            <Answer
-                                                key={index}
-                                                answer={answer[1]}
-                                                isSelected={selectedAnswer === index && activeAnalysisPanelTab !== undefined}
-                                                onCitationClicked={c => onShowCitation(c, index)}
-                                                onThoughtProcessClicked={() => onToggleTab(AnalysisPanelTabs.ThoughtProcessTab, index)}
-                                                onSupportingContentClicked={() => onToggleTab(AnalysisPanelTabs.SupportingContentTab, index)}
-                                                onFollowupQuestionClicked={q => makeApiRequest(q)}
-                                                showFollowupQuestions={answers.length - 1 === index}
-                                            />
-                                        </div>
-                                    </div>
-                                ))}
-                                {isLoading && (
-                                    <>
-                                        <UserChatMessage message={lastQuestionRef.current} />
-                                        <div className={styles.chatMessageGptMinWidth}>
-                                            <AnswerLoading />
-                                        </div>
-                                    </>
-                                )}
-                                {error ? (
-                                    <>
-                                        <UserChatMessage message={lastQuestionRef.current} />
-                                        <div className={styles.chatMessageGptMinWidth}>
-                                            <AnswerError error={error.toString()} onRetry={() => makeApiRequest(lastQuestionRef.current)} />
-                                        </div>
-                                    </>
-                                ) : null}
-                                <div ref={chatMessageStreamEnd} />
-                            </div>
-                        )}
-
-                        <div className={styles.chatInput}>
-                            <QuestionInput
-                                clearOnSend
-                                placeholder="Type a new question (e.g. How can I get help picking courses for next semester?)"
-                                disabled={isLoading}
-                                onSend={question => makeApiRequest(question)}
-                            />
-
-                            <DrawerOverlay
-                                className={styles.citationPanelContainer}
-                                open={isCitationPanelOpen}
-                                onOpenChange={(_, { open }) => onDrawerClose(open)}
-                                size="large"
-                                position="end"
-                            >
-                                <DrawerHeader className={styles.citationPanelHeader}>
-                                    <DrawerHeaderTitle
-                                        className={styles.citationPanelHeaderTitle}
-                                        action={
-                                            <Button appearance="subtle" aria-label="Close" icon={<Dismiss24Regular />} onClick={() => onDrawerClose(false)} />
-                                        }
-                                    >
-                                        Citation source
-                                    </DrawerHeaderTitle>
-                                </DrawerHeader>
-                                <DrawerBody>
-                                    <iframe title="Citation" src={activeCitation} width="100%" height="810px" />
-                                </DrawerBody>
-                            </DrawerOverlay>
-
-                            <Panel
-                                headerText="Configure answer generation"
-                                isOpen={isConfigPanelOpen}
-                                isBlocking={false}
-                                onDismiss={() => setIsConfigPanelOpen(false)}
-                                closeButtonAriaLabel="Close"
-                                onRenderFooterContent={() => <DefaultButton onClick={() => setIsConfigPanelOpen(false)}>Close</DefaultButton>}
-                                isFooterAtBottom={true}
-                            >
-                                <TextField
-                                    className={styles.chatSettingsSeparator}
-                                    defaultValue={promptTemplate}
-                                    label="Override prompt template"
-                                    multiline
-                                    autoAdjustHeight
-                                    onChange={onPromptTemplateChange}
-                                />
-
-                                <SpinButton
-                                    className={styles.chatSettingsSeparator}
-                                    label="Retrieve this many documents from search:"
-                                    min={1}
-                                    max={50}
-                                    defaultValue={retrieveCount.toString()}
-                                    onChange={onRetrieveCountChange}
-                                />
-                                <TextField className={styles.chatSettingsSeparator} label="Exclude category" onChange={onExcludeCategoryChanged} />
-                                <Checkbox
-                                    className={styles.chatSettingsSeparator}
-                                    checked={useSemanticRanker}
-                                    label="Use semantic ranker for retrieval"
-                                    onChange={onUseSemanticRankerChange}
-                                />
-                                <Checkbox
-                                    className={styles.chatSettingsSeparator}
-                                    checked={useSemanticCaptions}
-                                    label="Use query-contextual summaries instead of whole documents"
-                                    onChange={onUseSemanticCaptionsChange}
-                                    disabled={!useSemanticRanker}
-                                />
-                                <Checkbox
-                                    className={styles.chatSettingsSeparator}
-                                    checked={useSuggestFollowupQuestions}
-                                    label="Suggest follow-up questions"
-                                    onChange={onUseSuggestFollowupQuestionsChange}
-                                />
-                                <Dropdown
-                                    className={styles.chatSettingsSeparator}
-                                    label="Retrieval mode"
-                                    options={[
-                                        {
-                                            key: "hybrid",
-                                            text: "Vectors + Text (Hybrid)",
-                                            selected: retrievalMode == RetrievalMode.Hybrid,
-                                            data: RetrievalMode.Hybrid
-                                        },
-                                        { key: "vectors", text: "Vectors", selected: retrievalMode == RetrievalMode.Vectors, data: RetrievalMode.Vectors },
-                                        { key: "text", text: "Text", selected: retrievalMode == RetrievalMode.Text, data: RetrievalMode.Text }
-                                    ]}
-                                    required
-                                    onChange={onRetrievalModeChange}
-                                />
-                            </Panel>
-                        </div>
+                        <ChatContainer
+                            answers={answers}
+                            makeApiRequest={(question: string) => {
+                                setIsLoading(true);
+                                makeApiRequest(question);
+                            }}
+                            isLoading={isLoading}
+                            error={error}
+                            onShowCitation={c => {
+                                onShowCitation(c);
+                            }}
+                        ></ChatContainer>
+                        <CitationDrawer cite={activeCitation} isOpen={isCitationPanelOpen} onClose={() => setIsCitationPanelOpen(false)}></CitationDrawer>
                     </StackItem>
                 </Stack>
             </div>

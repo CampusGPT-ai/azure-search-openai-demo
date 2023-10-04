@@ -1,7 +1,9 @@
-import React from "react";
+import React, { useState } from "react";
 import ReactDOM from "react-dom/client";
 import { createHashRouter, RouterProvider } from "react-router-dom";
 import { initializeIcons } from "@fluentui/react";
+import UserContext from "./contextVariables";
+import { ProfileModel } from "./api";
 
 import "./index.css";
 
@@ -11,34 +13,39 @@ import ProfileSetup from "./pages/profileSetup/ProfileSetup";
 
 initializeIcons();
 
-const router = createHashRouter([
-    {
-        path: "/",
-        element: <Layout />,
-        children: [
-            {
-                index: true,
-                element: <Chat />
-            },
-            {
-                path: "qa",
-                lazy: () => import("./pages/oneshot/OneShot")
-            },
-            {
-                path: "profile",
-                element: <ProfileSetup />
-                //lazy: () => import("./pages/profileSetup/ProfileSetup")
-            },
-            {
-                path: "*",
-                lazy: () => import("./pages/NoPage")
-            }
-        ]
-    }
-]);
+const App: React.FC = () => {
+    const [loggedInUser, setLoggedInUser] = useState<ProfileModel | null>(null);
+    const router = createHashRouter([
+        {
+            path: "/",
+            element: <Layout />,
+            children: [
+                {
+                    index: true,
+                    element: <Chat />
+                },
+                {
+                    path: "profile",
+                    element: <ProfileSetup />
+                    //lazy: () => import("./pages/profileSetup/ProfileSetup")
+                },
+                {
+                    path: "*",
+                    lazy: () => import("./pages/NoPage")
+                }
+            ]
+        }
+    ]);
+
+    return (
+        <UserContext.Provider value={{ user: loggedInUser, setUser: setLoggedInUser }}>
+            <RouterProvider router={router} />
+        </UserContext.Provider>
+    );
+};
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
     <React.StrictMode>
-        <RouterProvider router={router} />
+        <App />
     </React.StrictMode>
 );

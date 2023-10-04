@@ -1,6 +1,19 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { getCitationFilePath, AskResponse } from "../../api";
 
+/***
+ * AskResponse = {
+    conversation_id: string;
+    conversation_topic: string;
+    answer: string;
+    thoughts: string | null;
+    data_points: string[];
+    follow_up: string[];
+    error?: string;
+};
+
+ */
+
 type HtmlParsedAnswer = {
     answerHtml: string;
     citations: string[];

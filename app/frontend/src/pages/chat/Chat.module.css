@@ -51,7 +51,10 @@
     margin-top: 0;
     margin-bottom: 30px;
 }
-
+.headerText {
+    text-align: left;
+    margin-left: 40px;
+}
 .chatEmptyStateSubtitle {
     font-weight: 600;
     margin-bottom: 10px;
@@ -70,7 +73,7 @@
 
 .chatMessageStream {
     flex-grow: 1;
-    max-height: 1024px;
+    max-height: 80vh;
     width: 100%;
     padding-left: 24px;
     padding-right: 24px;
@@ -163,7 +166,7 @@
 }
 
 .citationPanelHeaderTitle {
-    color: white;
+    color: "black";
     font-weight: bold;
     padding-right: 24px;
 }

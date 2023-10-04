@@ -1,34 +1,12 @@
-export const enum Approaches {
-    RetrieveThenRead = "rtr",
-    ReadRetrieveRead = "rrr",
-    ReadDecomposeAsk = "rda"
-}
-
-export const enum RetrievalMode {
-    Hybrid = "hybrid",
-    Vectors = "vectors",
-    Text = "text"
-}
-
 export type AskRequestOverrides = {
     conversationId: string;
     isNewConversation: boolean;
-    retrievalMode?: RetrievalMode;
-    semanticRanker?: boolean;
-    semanticCaptions?: boolean;
-    excludeCategory?: string;
     top?: number;
     temperature?: number;
     promptTemplate?: string;
     promptTemplatePrefix?: string;
     promptTemplateSuffix?: string;
     suggestFollowupQuestions?: boolean;
-};
-
-export type AskRequest = {
-    question: string;
-    approach: Approaches;
-    overrides?: AskRequestOverrides;
 };
 
 export type AskResponse = {
@@ -48,7 +26,7 @@ export type ChatTurn = {
 
 export type ChatRequest = {
     history: ChatTurn[];
-    approach: Approaches;
+    approach: string;
     overrides?: AskRequestOverrides;
 };
 

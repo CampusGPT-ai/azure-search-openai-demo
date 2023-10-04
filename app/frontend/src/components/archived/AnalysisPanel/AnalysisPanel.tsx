@@ -3,8 +3,8 @@ import DOMPurify from "dompurify";
 
 import styles from "./AnalysisPanel.module.css";
 
-import { SupportingContent } from "../SupportingContent";
-import { AskResponse } from "../../api";
+import { SupportingContent } from "../../SupportingContent";
+import { AskResponse } from "../../../api";
 import { AnalysisPanelTabs } from "./AnalysisPanelTabs";
 
 interface Props {

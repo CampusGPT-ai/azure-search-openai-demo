@@ -1,60 +1,20 @@
-import { AskRequest, AskResponse, ChatRequest, InterestsResponse, ConversationsResponse, ProfileResponse, ProfilesResponse, TopicResponse } from "./models";
+import { AskResponse, ChatTurn, ChatRequest, InterestsResponse, ConversationsResponse, ProfileResponse, ProfilesResponse, TopicResponse } from "./models";
 
-export async function askApi(options: AskRequest): Promise<AskResponse> {
-    const response = await fetch("/ask", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            question: options.question,
-            approach: options.approach,
-            overrides: {
-                conversation_id: options.overrides?.conversationId,
-                is_new_conversation: options.overrides?.isNewConversation,
-                retrieval_mode: options.overrides?.retrievalMode,
-                semantic_ranker: options.overrides?.semanticRanker,
-                semantic_captions: options.overrides?.semanticCaptions,
-                top: options.overrides?.top,
-                temperature: options.overrides?.temperature,
-                prompt_template: options.overrides?.promptTemplate,
-                prompt_template_prefix: options.overrides?.promptTemplatePrefix,
-                prompt_template_suffix: options.overrides?.promptTemplateSuffix,
-                exclude_category: options.overrides?.excludeCategory
-            }
-        })
-    });
+export async function chatApi(question: string, answers: [string, AskResponse][], conversationId?: string, isNewConversation?: boolean): Promise<AskResponse> {
+    const history: ChatTurn[] = answers?.map(a => ({ user: a[0], bot: a[1].answer })) || [];
 
-    const parsedResponse: AskResponse = await response.json();
-    if (response.status > 299 || !response.ok) {
-        throw Error(parsedResponse.error || "Unknown error");
-    }
-
-    return parsedResponse;
-}
-
-export async function chatApi(options: ChatRequest): Promise<AskResponse> {
     const response = await fetch("/chat", {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
         },
         body: JSON.stringify({
-            history: options.history,
-            approach: options.approach,
+            history: [...history, { user: question, bot: undefined }],
+            approach: "rrr",
             overrides: {
-                conversation_id: options.overrides?.conversationId,
-                is_new_conversation: options.overrides?.isNewConversation,
-                retrieval_mode: options.overrides?.retrievalMode,
-                semantic_ranker: options.overrides?.semanticRanker,
-                semantic_captions: options.overrides?.semanticCaptions,
-                top: options.overrides?.top,
-                temperature: options.overrides?.temperature,
-                prompt_template: options.overrides?.promptTemplate,
-                prompt_template_prefix: options.overrides?.promptTemplatePrefix,
-                prompt_template_suffix: options.overrides?.promptTemplateSuffix,
-                exclude_category: options.overrides?.excludeCategory,
-                suggest_followup_questions: options.overrides?.suggestFollowupQuestions
+                conversation_id: conversationId || "",
+                is_new_conversation: isNewConversation || false,
+                suggest_followup_questions: true
             }
         })
     });

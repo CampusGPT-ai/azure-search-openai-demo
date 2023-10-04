@@ -9,7 +9,12 @@ interface Props {
     history: Array<ChatHistoryMessageModel>;
     onCitationClicked: (filePath: string) => void;
 }
-
+/**
+ * passes chat history from interactions table to accordion, message includes ask and response (user bot).
+ * creates new message component for each interaction
+ *
+ * @returns
+ */
 export const UserChatHistory = ({ history, onCitationClicked }: Props) => {
     return (
         <Accordion multiple collapsible>

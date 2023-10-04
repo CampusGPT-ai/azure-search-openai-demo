@@ -1,9 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { Outlet, NavLink, Link, useOutletContext } from "react-router-dom";
 import { Persona, Subtitle2 } from "@fluentui/react-components";
 import seal from "../../assets/fsu-seal-3d-160x160.png";
 import avatar from "../../assets/avatars/reinhold.png";
 import { Image, ImageFit } from "@fluentui/react";
+import UserContext from "../../contextVariables";
 
 import styles from "./Layout.module.css";
 import { ProfileModel, currentProfileApi } from "../../api";
@@ -56,6 +57,7 @@ const Layout = () => {
     capture logged in user in state
     log it
     */
+    const { setUser } = useContext(UserContext);
     const [loggedInUser, setLoggedInUser] = useState<ProfileModel | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [error, setError] = useState<unknown>();
@@ -65,9 +67,7 @@ const Layout = () => {
         setIsLoading(true);
         try {
             const result = await currentProfileApi();
-            console.log("Current user: " + result);
             setLoggedInUser(result.profile);
-            console.log("Loaded user in layout component: " + loggedInUser);
         } catch (e) {
             setError(e);
         } finally {
@@ -81,6 +81,7 @@ const Layout = () => {
 
     useEffect(() => {
         console.log("detected change in loggedInUser in layout: " + loggedInUser?.full_name);
+        setUser(loggedInUser);
     }, [loggedInUser]);
 
     return (
@@ -115,7 +116,7 @@ const Layout = () => {
                                                     style={{ borderRadius: "50%" }}
                                                 />
                                             ) : (
-                                                <span>LOGIN </span>
+                                                <span>Click to login </span>
                                             )}
                                         </div>
                                     </NavLink>
