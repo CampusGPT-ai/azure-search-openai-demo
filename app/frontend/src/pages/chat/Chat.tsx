@@ -11,11 +11,9 @@ import {
     ConversationsResponse,
     conversationsApi,
     ConversationsModel,
-    //InterestsResponse,
     InterestModel,
     TopicModel,
     ProfileModel,
-    //interestsAllApi,
     currentProfileApi,
     topicsAllApi,
     TopicResponse
@@ -38,6 +36,9 @@ const Chat = () => {
         }));
     }
 
+    let topicsAsList: string[] = ["test1", "test2", "test3"];
+    let topicsAsModel: TopicModel[] = topicsAsList.map(topic => ({ topic }));
+
     const [isCitationPanelOpen, setIsCitationPanelOpen] = useState(false);
 
     const lastQuestionRef = useRef<string>("");
@@ -51,24 +52,11 @@ const Chat = () => {
     const [answers, setAnswers] = useState<[user: string, response: AskResponse][]>([]);
 
     const [conversations, setConversations] = useState<ConversationsResponse | undefined>(undefined);
-    //const [interests, setInterests] = useState<InterestsResponse | undefined>(undefined);
     const [topics, setTopics] = useState<TopicResponse | undefined>(undefined);
     const [isNewConversation, setIsNewConversation] = useState<boolean>(getLocalStorage<boolean>("isNewConversation") || false);
     const [conversationId, setConversationId] = useState<string>(getLocalStorage<string>("conversationId") || uuid().toString());
     const [activeConversation, setActiveConversation] = useState<ConversationsModel | null>(null);
     const [currentUser, setCurrentUser] = useState<ProfileModel | null>(null);
-
-    //const makeInterestApiRequest = async () => {
-    //    setIsLoading(true);
-    //    try {
-    //        const result = await interestsAllApi();
-    //        setInterests(result);
-    //    } catch (e) {
-    //        setError(e);
-    //    } finally {
-    //        setIsLoading(false);
-    //    }
-    //};
 
     const makeTopicApiRequest = async () => {
         setIsLoading(true);
@@ -142,12 +130,10 @@ const Chat = () => {
         console.log("Setting State Variables");
         setConversationId(uuid().toString());
         setConversations(undefined);
-        //setInterests(undefined);
         setIsNewConversation(true);
         clearChat();
         makeConversationsApiRequest();
         makeTopicApiRequest();
-        //makeInterestApiRequest();
     }, [currentUser]);
 
     const clearChat = () => {
@@ -215,11 +201,6 @@ const Chat = () => {
         setLocalStorage("isNewChat", isNewConversation);
     }, [isNewConversation]);
 
-    //let interestList: Array<InterestModel> = [];
-    //if (interests?.list) {
-    //    interestList = interests.list;
-    //}
-
     let topicList: Array<TopicModel> = [];
     if (topics?.list) {
         topicList = topics.list;
@@ -241,7 +222,7 @@ const Chat = () => {
             <div className={styles.contentHeader}>
                 <h2>Trending Topics</h2>
                 <div className={styles.contentSection}>
-                    <TopicList list={topicList} />
+                    <TopicList list={topicsAsModel} />
                 </div>
             </div>
             <div className={styles.chatSection}>
