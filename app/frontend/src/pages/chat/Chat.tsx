@@ -311,7 +311,7 @@ const Chat = () => {
             <div className={styles.contentHeader}>
                 <h3>Recommended For You:</h3>
                 <div className={styles.contentSection}>
-                    <TopicList list={topicsList ? topicsList : []} />
+                    <TopicList list={topicsList ? topicsList : []} onTopicClick={makeApiRequest} />
                 </div>
             </div>
             <div className={styles.chatSection}>
