@@ -12,8 +12,8 @@ export const filterTopicsByInterests = async (topics: TopicModel[], interests: s
         });
 
         console.log("Retrieved filtered topics:", filteredTopics);
-
-        return [...new Set(filteredTopics.map(topic => topic.question))];
+        const distinctTopics = [...new Set(filteredTopics.map(topic => topic.question))];
+        return distinctTopics.slice(0, 4);
     } catch (error) {
         console.error("Error getting filtered topics:", error);
         return [];

@@ -7,31 +7,17 @@ export type ExampleModel = {
     value: string;
 };
 
-const EXAMPLES: ExampleModel[] = [
-    {
-        text: "How can I get help picking courses for next semester?",
-        value: "How can I get help picking courses for next semester?"
-    },
-    {
-        text: "Who are the adivors for physics?",
-        value: "Who are the adivors for physics?"
-    },
-    {
-        text: "How can I get help with financial aid?",
-        value: "How can I get help with financial aid?"
-    }
-];
-
 interface Props {
+    examples: string[];
     onExampleClicked: (value: string) => void;
 }
 
-export const ExampleList = ({ onExampleClicked }: Props) => {
+export const ExampleList = ({ examples, onExampleClicked }: Props) => {
     return (
         <ul className={styles.examplesNavList}>
-            {EXAMPLES.map((x, i) => (
+            {examples.map((x, i) => (
                 <li key={i}>
-                    <Example text={x.text} value={x.value} onClick={onExampleClicked} />
+                    <Example text={x} value={x} onClick={onExampleClicked} />
                 </li>
             ))}
         </ul>

@@ -9,6 +9,7 @@ import { UserChatMessage } from "../UserChatMessage";
 import styles from "../../pages/chat/Chat.module.css";
 
 type Props = {
+    examples: string[];
     answers: [user: string, response: AskResponse][];
     onShowCitation: (citation: string) => void;
     makeApiRequest: (question: string) => void;
@@ -16,7 +17,7 @@ type Props = {
     error: unknown;
 };
 
-const ChatContainer = ({ answers, onShowCitation, makeApiRequest, isLoading, error }: Props) => {
+const ChatContainer = ({ examples, answers, onShowCitation, makeApiRequest, isLoading, error }: Props) => {
     const lastItem = answers.length > 0 ? answers[answers.length - 1] : undefined;
     const [lastQuestion, setLastQuestion] = useState<[user: string, response: AskResponse] | undefined>(lastItem);
     const chatMessageStreamEnd = useRef<HTMLDivElement | null>(null);
@@ -40,7 +41,7 @@ const ChatContainer = ({ answers, onShowCitation, makeApiRequest, isLoading, err
             {answers.length === 0 ? (
                 <div className={styles.chatEmptyState}>
                     <h3 className={styles.chatEmptyStateSubtitle}>Ask a question in chat or try one of the examples to get started</h3>
-                    <ExampleList onExampleClicked={onExampleClicked} />
+                    <ExampleList examples={examples} onExampleClicked={onExampleClicked} />
                 </div>
             ) : (
                 <div className={styles.chatMessageStream}>

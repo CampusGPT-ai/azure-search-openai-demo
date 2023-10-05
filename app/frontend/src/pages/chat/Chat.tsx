@@ -308,12 +308,7 @@ const Chat = () => {
                     <InterestList list={interestList} onInterestChanged={handleInterestChange} />
                 </div>
             </div>
-            <div className={styles.contentHeader}>
-                <h3>Recommended For You:</h3>
-                <div className={styles.contentSection}>
-                    <TopicList list={topicsList ? topicsList : []} onTopicClick={makeApiRequest} />
-                </div>
-            </div>
+
             <div className={styles.chatSection}>
                 <Stack horizontal horizontalAlign="stretch">
                     <StackItem className={styles.chatHistoryContainer} disableShrink>
@@ -325,6 +320,7 @@ const Chat = () => {
                     </StackItem>
                     <StackItem className={styles.chatInputContainer}>
                         <ChatContainer
+                            examples={topicsList ? topicsList : []}
                             answers={chatHistory}
                             makeApiRequest={(question: string) => {
                                 setIsLoading(true);
