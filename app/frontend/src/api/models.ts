@@ -49,7 +49,7 @@ export type TopicModel = {
 };
 
 export type TopicResponse = {
-    list: Array<TopicModel>;
+    topic: Array<TopicModel>;
     error?: string;
 };
 
@@ -88,7 +88,14 @@ export type ProfileModel = {
     full_name: string;
     avatar: string;
     interests: Array<string>;
-    demographics: Map<string, string>;
-    academics: Map<string, string>;
+    demographics: {
+        Ethnicity: string;
+        Gender: string;
+    };
+    academics: {
+        "Academic Year": string;
+        Major: string;
+        Minor: string;
+    };
     courses: Array<string>;
 };

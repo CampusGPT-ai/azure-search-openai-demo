@@ -125,8 +125,8 @@ async def get_all_interests() :
 @bp.route("/topics", methods=["GET"])
 async def get_topics() :
     try: 
-        data = Topic.topic()
-        return  jsonify(data), 200
+        data = Topic.topics()
+        return jsonify({ "topic": list(map(lambda x: x.to_json(), data))}), 200
     except Exception as e: 
         logging.exception("Exception in /topics")
         return jsonify({"error": str(e)}), 500
@@ -235,6 +235,7 @@ async def setup_clients():
     # setup persistence handlers and 
     Institution.configure(AZURE_COSMOS_HOST, AZURE_COSMOS_DB, AZURE_COSMOS_KEY)
     Profile.configure(AZURE_COSMOS_HOST, AZURE_COSMOS_DB, AZURE_COSMOS_KEY)
+    Topic.configure(AZURE_COSMOS_HOST, AZURE_COSMOS_DB, AZURE_COSMOS_KEY)
     ChatHistory.configure(AZURE_COSMOS_HOST, AZURE_COSMOS_DB, AZURE_COSMOS_KEY)
     Conversation.configure(AZURE_COSMOS_HOST, AZURE_COSMOS_DB, AZURE_COSMOS_KEY)
 
@@ -249,29 +250,7 @@ async def setup_clients():
 
     # Various approaches to integrate GPT and external knowledge, most applications will use a single one of these patterns
     # or some derivative, here we include several for exploration purposes
-    current_app.config[CONFIG_ASK_APPROACHES] = {
-        "rtr": RetrieveThenReadApproach(
-            search_client,
-            AZURE_OPENAI_CHATGPT_DEPLOYMENT,
-            AZURE_OPENAI_CHATGPT_MODEL,
-            AZURE_OPENAI_EMB_DEPLOYMENT,
-            KB_FIELDS_SOURCEPAGE,
-            KB_FIELDS_CONTENT
-        ),
-        "rrr": ReadRetrieveReadApproach(
-            search_client,
-            AZURE_OPENAI_CHATGPT_DEPLOYMENT,
-            AZURE_OPENAI_EMB_DEPLOYMENT,
-            KB_FIELDS_SOURCEPAGE,
-            KB_FIELDS_CONTENT
-        ),
-        "rda": ReadDecomposeAsk(search_client,
-            AZURE_OPENAI_CHATGPT_DEPLOYMENT,
-            AZURE_OPENAI_EMB_DEPLOYMENT,
-            KB_FIELDS_SOURCEPAGE,
-            KB_FIELDS_CONTENT
-        )
-    }
+
     current_app.config[CONFIG_CHAT_APPROACHES] = {
         "rrr": ChatReadRetrieveReadApproach(
             search_client,

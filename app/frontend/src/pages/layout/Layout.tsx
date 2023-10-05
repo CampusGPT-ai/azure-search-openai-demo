@@ -81,8 +81,8 @@ const Layout = () => {
         setIsLoading(true);
         try {
             const result = await topicsAllApi();
-            setTopics(result.list);
-            console.log("got topics from API: " + result);
+            setTopics(result.topic);
+            //console.log("got topics from API: " + result);
         } catch (e) {
             setError(e);
         } finally {
@@ -96,7 +96,7 @@ const Layout = () => {
     }, []);
 
     useEffect(() => {
-        console.log("detected change in loggedInUser in layout: " + loggedInUser?.full_name);
+        //console.log("detected change in loggedInUser in layout: " + loggedInUser?.full_name);
         setUser(loggedInUser);
     }, [loggedInUser]);
 

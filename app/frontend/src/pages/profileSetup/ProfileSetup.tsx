@@ -29,7 +29,7 @@ const ProfileSetup = () => {
     };
 
     const makeDemoProfilesApiRequest = async () => {
-        console.log("making demo profiles api request");
+        //console.log("making demo profiles api request");
         setIsLoading(true);
         try {
             const result = await demoProfilesApi();
@@ -66,7 +66,7 @@ const ProfileSetup = () => {
                                 className={styles.loginButton}
                                 type="submit"
                                 onClick={el => {
-                                    console.log("logging in with profile id: " + selectedProfileId);
+                                    //console.log("logging in with profile id: " + selectedProfileId);
                                 }}
                             >
                                 LOGIN

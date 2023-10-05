@@ -4,7 +4,7 @@ import { v4 as uuid } from "uuid";
 import { Stack, StackItem } from "@fluentui/react";
 import { UserContext, TopicContext } from "../../contextVariables";
 import ChatContainer from "../../components/ChatContainer/chatContainer";
-import { getDistinctTopics } from "../../components/Topics/TopicUtilities";
+import { getDistinctTopics, filterTopicsByInterests, getQuestionsByTopic } from "../../components/Topics/TopicUtilities";
 import CitationDrawer from "../../components/Citation/citationDrawer";
 import {
     AskResponse,
@@ -29,64 +29,173 @@ import styles from "./Chat.module.css";
 const Chat = () => {
     const { user } = useContext(UserContext);
     const { topics } = useContext(TopicContext);
-
-    let interestsAsModel: InterestModel[] = [];
-
-    // Map user interests
-    if (user && user.interests) {
-        interestsAsModel = user.interests.map(interest => ({
-            interest,
-            selected: false
-        }));
-    }
-
-    // Append major and minor from academics
-    if (user && user.academics) {
-        const major = user.academics.get("major");
-        const minor = user.academics.get("minor");
-        if (major) {
-            interestsAsModel.push({
-                interest: major + " major",
-                selected: false
-            });
-        }
-        if (minor) {
-            interestsAsModel.push({
-                interest: minor + " minor",
-                selected: false
-            });
-        }
-    }
-
-    // Append ethnicity from demographics
-    if (user && user.demographics) {
-        const ethnicity = user.demographics.get("ethnicity");
-        if (ethnicity) {
-            interestsAsModel.push({
-                interest: ethnicity + " ethnicity",
-                selected: false
-            });
-        }
-    }
-    const distinctTopics = getDistinctTopics(topics);
-
+    const prevTopicsRef = useRef<TopicModel[]>([]);
+    const prevCheckedInterestsRef = useRef<InterestModel[]>([]);
+    const fakeList: string[] = ["test 1", "test 2", "test 3"];
+    const [topicsList, setTopics] = useState<string[]>([]);
+    const [interestList, setInterests] = useState<InterestModel[]>([]);
+    const [selectedTopic, setSelectedTopic] = useState<string>("");
+    const [questionsList, setQuestions] = useState<string[]>([]);
+    const [checkedInterests, setCheckedInterests] = useState<InterestModel[]>([]);
     const [isCitationPanelOpen, setIsCitationPanelOpen] = useState(false);
-
     const lastQuestionRef = useRef<string>("");
     const chatMessageStreamEnd = useRef<HTMLDivElement | null>(null);
-
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [error, setError] = useState<unknown>();
-
     const [activeCitation, setActiveCitation] = useState<string>();
-
     const [answers, setAnswers] = useState<[user: string, response: AskResponse][]>([]);
-
     const [conversations, setConversations] = useState<ConversationsResponse | undefined>(undefined);
     const [isNewConversation, setIsNewConversation] = useState<boolean>(getLocalStorage<boolean>("isNewConversation") || false);
     const [conversationId, setConversationId] = useState<string>(getLocalStorage<string>("conversationId") || uuid().toString());
     const [activeConversation, setActiveConversation] = useState<ConversationsModel | null>(null);
-    const [currentUser, setCurrentUser] = useState<ProfileModel | null>(null);
+
+    let conversationsList: Array<ConversationsModel> = [];
+    if (conversations?.list) {
+        conversationsList = conversations.list;
+    }
+
+    const updateTopics = async () => {
+        try {
+            const initialTopicsList = await getDistinctTopics(topics);
+            let filteredTopicsList = null;
+            if (checkedInterests.length > 0) {
+                console.log("Initial checkedInterests:", JSON.stringify(checkedInterests, null, 2)); // Log initial checkedInterests
+
+                // Check if all values for checkedInterests.selected are false
+                const allFalse = checkedInterests.every(x => !x.selected);
+                console.log("All selected values false:", allFalse); // Log result of allFalse check
+
+                // If all values are false, send the whole list to the filter
+                // Otherwise, send only the interests with selected set to true
+                const interestsToSend = allFalse ? checkedInterests.map(x => x.interest) : checkedInterests.filter(x => x.selected).map(x => x.interest);
+
+                console.log("Interests to send:", JSON.stringify(interestsToSend, null, 2)); // Log interestsToSend
+
+                filteredTopicsList = await filterTopicsByInterests(topics, interestsToSend);
+                console.log("Returned list of filtered topics:", JSON.stringify(filteredTopicsList, null, 2)); // Log filteredTopicsList
+            }
+
+            if (filteredTopicsList != null) {
+                console.log("setting topics to filtered topics: " + filteredTopicsList);
+                setTopics(filteredTopicsList);
+            } else {
+                console.log("setting topics to initial topics: " + initialTopicsList);
+                setTopics(initialTopicsList);
+            }
+        } catch (error) {
+            console.error("Error updating topics:", error);
+        }
+    };
+
+    const updateQuestions = async () => {
+        const filteredQuestionsList = selectedTopic ? await getQuestionsByTopic(topics, selectedTopic) : null;
+        filteredQuestionsList ? setQuestions(filteredQuestionsList) : null;
+    };
+
+    const setInterestsList = () => {
+        let interestsAsModel: InterestModel[] = [];
+
+        // Map user interests
+        if (user && user.interests) {
+            console.log("setting interests for user: " + user.full_name);
+            interestsAsModel = user.interests.map(interest => ({
+                interest,
+                selected: false
+            }));
+        }
+
+        // Append major and minor from academics
+        if (user && user.academics) {
+            const major = user.academics.Major;
+            const minor = user.academics.Minor;
+            if (major) {
+                interestsAsModel.push({
+                    interest: major + " major",
+                    selected: false
+                });
+            }
+            if (minor) {
+                interestsAsModel.push({
+                    interest: minor + " minor",
+                    selected: false
+                });
+            }
+        }
+
+        // Append ethnicity from demographics
+        if (user && user.demographics) {
+            const ethnicity = user.demographics.Ethnicity;
+            if (ethnicity && ethnicity.toLowerCase() != "white") {
+                interestsAsModel.push({
+                    interest: ethnicity + " ethnicity",
+                    selected: false
+                });
+            }
+        }
+        setCheckedInterests(interestsAsModel);
+        setInterests(interestsAsModel);
+    };
+    const clearChat = () => {
+        lastQuestionRef.current = "";
+        error && setError(undefined);
+        setActiveCitation(undefined);
+        setAnswers([]);
+    };
+
+    const onShowCitation = (citation: string) => {
+        if (activeCitation === citation) {
+            setIsCitationPanelOpen(false);
+        } else {
+            setActiveCitation(citation);
+            //console.log("citation set to " + activeCitation);
+            setIsCitationPanelOpen(true);
+        }
+    };
+
+    const onConversationSelected = (conversationId: string) => {
+        //console.log("Conversation selected: id=" + conversationId);
+        if (conversations != null) {
+            const matchingConversation = conversations.list.find(el => el.id === conversationId);
+            if (matchingConversation) {
+                //console.log("Found conversation with topic: " + matchingConversation.topic);
+                setActiveConversation(matchingConversation);
+                setConversationId(matchingConversation.id);
+            }
+        }
+    };
+
+    const handleInterestChange = (interest: InterestModel) => {
+        console.log(`Handling interest change for interest ${JSON.stringify(interest)}`);
+
+        // Call setCheckedInterests to update the state.
+        setCheckedInterests(prevInterests => {
+            console.log("Previous checked interests:", JSON.stringify(prevInterests));
+
+            // Create a new array using the map method, where each item is updated based on the condition.
+            const updatedInterests = prevInterests.map(item => {
+                // Check if the current item's interest property matches the interest property of the incoming interest object.
+                if (item.interest.toLowerCase() === interest.interest.toLowerCase()) {
+                    // If there's a match, log the change, then return a new object with the selected property updated to match interest.selected.
+                    console.log(`Updating selected status of interest ${item.interest} from ${item.selected} to ${interest.selected}`);
+                    return { ...item, selected: interest.selected };
+                }
+                // If there's no match, return the item unmodified.
+                return item;
+            });
+
+            console.log("Updated checked interests:", JSON.stringify(updatedInterests));
+
+            // Return the updated interests array to complete the state update.
+            return updatedInterests;
+        });
+    };
+
+    const startNewChat = () => {
+        //console.log("Starting new chat");
+        clearChat();
+        setIsNewConversation(true);
+        setConversationId(uuid().toString());
+    };
 
     const makeConversationsApiRequest = async () => {
         setIsLoading(true);
@@ -100,27 +209,15 @@ const Chat = () => {
         }
     };
 
-    const makeCurrentUserApiRequest = async () => {
-        setIsLoading(true);
-        try {
-            const result = await currentProfileApi();
-            console.log("Current user: " + result);
-            setCurrentUser(result.profile);
-        } catch (e) {
-            setError(e);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
     const makeApiRequest = async (question: string) => {
+        setIsLoading(true);
         try {
             const result = await chatApi(question, answers, conversationId, isNewConversation);
             setAnswers([...answers, [question, result]]);
             setConversationId(result.conversation_id);
 
             if (isNewConversation) {
-                console.log("Received response, including new conversation title, setting title: " + result.conversation_topic);
+                //console.log("Received response, including new conversation title, setting title: " + result.conversation_topic);
                 const convo: ConversationsModel = {
                     id: conversationId,
                     topic: result.conversation_topic,
@@ -139,51 +236,38 @@ const Chat = () => {
     };
 
     useEffect(() => {
-        console.log("getting current user");
-        makeCurrentUserApiRequest();
         chatMessageStreamEnd.current?.scrollIntoView({ behavior: "smooth" }), [isLoading];
     }, []);
 
     useEffect(() => {
-        console.log("Setting State Variables");
-        setConversationId(uuid().toString());
-        setConversations(undefined);
-        setIsNewConversation(true);
-        clearChat();
-        makeConversationsApiRequest();
-    }, [currentUser]);
-
-    const clearChat = () => {
-        lastQuestionRef.current = "";
-        error && setError(undefined);
-        setActiveCitation(undefined);
-        setAnswers([]);
-    };
-
-    const onShowCitation = (citation: string) => {
-        if (activeCitation === citation) {
-            setIsCitationPanelOpen(false);
+        //don't call on initial render
+        if (topics.length > 0 && (topics !== prevTopicsRef.current || checkedInterests !== prevCheckedInterestsRef.current)) {
+            //console.log("getting topics for user based on topics list " + JSON.stringify(topics, null, 2));
+            updateTopics();
+            prevTopicsRef.current = topics;
+            prevCheckedInterestsRef.current = checkedInterests;
         } else {
-            setActiveCitation(citation);
-            console.log("citation set to " + activeCitation);
-            setIsCitationPanelOpen(true);
         }
-    };
-
-    const onConversationSelected = (conversationId: string) => {
-        console.log("Conversation selected: id=" + conversationId);
-        if (conversations != null) {
-            const matchingConversation = conversations.list.find(el => el.id === conversationId);
-            if (matchingConversation) {
-                console.log("Found conversation with topic: " + matchingConversation.topic);
-                setActiveConversation(matchingConversation);
-                setConversationId(matchingConversation.id);
-            }
-        }
-    };
+    }, [checkedInterests, user, topics]);
 
     useEffect(() => {
-        console.log("new active conversation detected:" + activeConversation?.id);
+        console.log("questions: ", questionsList);
+        updateQuestions();
+    }, [selectedTopic]);
+
+    useEffect(() => {
+        if (user) {
+            setConversationId(uuid().toString());
+            setInterestsList();
+            setConversations(undefined);
+            setIsNewConversation(true);
+            clearChat();
+            makeConversationsApiRequest();
+        }
+    }, [user]);
+
+    useEffect(() => {
+        //console.log("new active conversation detected:" + activeConversation?.id);
         clearChat();
         let lastQuestion = "";
         let answers: [user: string, answer: string][] = [];
@@ -203,13 +287,6 @@ const Chat = () => {
         setAnswers(answers.reverse().map(x => [x[0], JSON.parse(x[1])]));
     }, [activeConversation]);
 
-    const startNewChat = () => {
-        console.log("Starting new chat");
-        clearChat();
-        setIsNewConversation(true);
-        setConversationId(uuid().toString());
-    };
-
     useEffect(() => {
         setLocalStorage<string>("conversationId", conversationId);
     }, [conversationId]);
@@ -217,24 +294,18 @@ const Chat = () => {
     useEffect(() => {
         setLocalStorage("isNewChat", isNewConversation);
     }, [isNewConversation]);
-
-    let conversationsList: Array<ConversationsModel> = [];
-    if (conversations?.list) {
-        conversationsList = conversations.list;
-    }
-
     return (
         <div className={styles.container}>
             <div className={styles.contentHeader}>
-                <h2>Your Interests</h2>
+                <h3>Your Interests</h3>
                 <div className={styles.contentSection}>
-                    <InterestList list={interestsAsModel} />
+                    <InterestList list={interestList} onInterestChanged={handleInterestChange} />
                 </div>
             </div>
             <div className={styles.contentHeader}>
-                <h2>Trending Topics</h2>
+                <h3>Recommended For You:</h3>
                 <div className={styles.contentSection}>
-                    <TopicList list={distinctTopics} />
+                    <TopicList list={topicsList ? topicsList : []} />
                 </div>
             </div>
             <div className={styles.chatSection}>

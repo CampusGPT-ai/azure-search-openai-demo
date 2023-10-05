@@ -1,13 +1,13 @@
 import { useState } from "react";
-import { Checkbox } from "@fluentui/react-components";
-import { makeStyles } from "@fluentui/react-components";
-import type { CheckboxProps } from "@fluentui/react-components";
+import { InterestModel } from "../../api";
+import { Checkbox, CheckboxOnChangeData, makeStyles, CheckboxProps } from "@fluentui/react-components";
 
 import styles from "./Interest.css";
 
 interface Props {
     text: string;
     selected: boolean;
+    onCheckChange: (interest: InterestModel) => void;
 }
 
 const useClasses = makeStyles({
@@ -16,8 +16,14 @@ const useClasses = makeStyles({
     }
 });
 
-export const Interest = ({ text, selected }: Props) => {
-    const [checked, setChecked] = useState<CheckboxProps["checked"]>(selected);
+export const Interest = ({ text, selected, onCheckChange }: Props) => {
     const classes = useClasses();
-    return <Checkbox className={classes.checkboxes} onChange={(ev, data) => setChecked(data.checked)} label={text} />;
+
+    const handleCheckChange = (ev: React.ChangeEvent<HTMLInputElement>, data: CheckboxOnChangeData) => {
+        //console.log("handling check change for: " + text + ". Setting check to " + data.checked.toString());
+        const isSelected = data.checked === true; // Set to false for 'mixed' or undefined
+        onCheckChange({ interest: text, selected: isSelected });
+    };
+
+    return <Checkbox className={classes.checkboxes} onChange={handleCheckChange} label={text} />;
 };

@@ -53,7 +53,7 @@ const ChatContainer = ({ answers, onShowCitation, makeApiRequest, isLoading, err
                                     key={index}
                                     answer={answer[1]}
                                     onCitationClicked={c => {
-                                        console.log("citation click event registered for: " + c);
+                                        //console.log("citation click event registered for: " + c);
                                         onShowCitation(c);
                                     }}
                                     onFollowupQuestionClicked={q => {

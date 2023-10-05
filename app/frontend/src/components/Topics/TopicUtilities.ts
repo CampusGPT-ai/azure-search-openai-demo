@@ -1,15 +1,31 @@
 import { TopicModel } from "../../api";
 
-export const filterTopicsByInterests = (topics: TopicModel[], interests: string[]): string[] => {
-    const filteredTopics = topics.filter(topic => topic.related_interests.some(interest => interests.includes(interest)));
-    return [...new Set(filteredTopics.map(topic => topic.topic))];
+export const filterTopicsByInterests = async (topics: TopicModel[], interests: string[]): Promise<string[]> => {
+    try {
+        const interestsLower: string[] = interests.map(x => x.toLowerCase());
+        const filteredTopics = topics.filter((topic, index) => {
+            const hasRelatedInterest = topic.related_interests.some((interest, interestIndex) => {
+                const isInterestIncluded = interestsLower.includes(interest.toLowerCase());
+                return isInterestIncluded;
+            });
+            return hasRelatedInterest;
+        });
+
+        console.log("Retrieved filtered topics:", filteredTopics);
+
+        return [...new Set(filteredTopics.map(topic => topic.question))];
+    } catch (error) {
+        console.error("Error getting filtered topics:", error);
+        return [];
+    }
 };
 
-export const getDistinctTopics = (topics: TopicModel[]): string[] => {
-    const distinctTopics = [...new Set(topics.map(topic => topic.topic))];
-    return distinctTopics.slice(0, 5);
+export const getDistinctTopics = async (topics: TopicModel[]): Promise<string[]> => {
+    //console.log("mapping topics to distinct list:" + topics);
+    const distinctTopics = [...new Set(topics.map(topic => topic.question))];
+    return distinctTopics.slice(0, 4);
 };
 
-export const getQuestionsByTopic = (topics: TopicModel[], topicName: string): string[] => {
+export const getQuestionsByTopic = async (topics: TopicModel[], topicName: string): Promise<string[]> => {
     return topics.filter(topic => topic.topic === topicName).map(topic => topic.question);
 };

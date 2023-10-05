@@ -51,7 +51,7 @@ class Topic:
             related_interests=data.get("related_interests")
         )
 
-
+    @classmethod
     def topics(cls):
         try:
             results = cls._cosmos_container.query_items(
@@ -59,13 +59,13 @@ class Topic:
                     enable_cross_partition_query=True
                 )
 
-            t = None
-            for item in results:
-                t = item
-                break
+            topics_list = [cls.from_dict(item) for item in results] 
+
+            return topics_list 
             
-            return cls.from_dict(t) if p is not None else None
-        
         except Exception as e: 
             raise e
 
+    def to_json(self):
+        print(self.__dict__)
+        return self.__dict__
