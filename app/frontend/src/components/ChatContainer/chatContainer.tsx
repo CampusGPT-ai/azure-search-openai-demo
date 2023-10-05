@@ -36,8 +36,7 @@ const ChatContainer = ({ examples, answers, onShowCitation, makeApiRequest, isLo
             <div className={styles.headerText}>
                 <h2>What's on your mind today?</h2>
             </div>
-            {/*get a reference to whether the last question is empty - ie has a question been asked.  
-            if not, show the example list, otherwise just show the answers*/}
+
             {answers.length === 0 ? (
                 <div className={styles.chatEmptyState}>
                     <h3 className={styles.chatEmptyStateSubtitle}>Ask a question in chat or try one of the examples to get started</h3>
@@ -45,10 +44,11 @@ const ChatContainer = ({ examples, answers, onShowCitation, makeApiRequest, isLo
                 </div>
             ) : (
                 <div className={styles.chatMessageStream}>
-                    {/** show Q&A  */}
                     {answers.map((answer, index) => (
                         <div key={index}>
-                            {(index === 0 || answers[index - 1][1].answer !== "") && <UserChatMessage message={answer[0]} />}
+                            {(index === 0 || (answers[index - 1][1].answer !== "" && answer[0] !== lastQuestion?.[0])) && (
+                                <UserChatMessage message={answer[0]} />
+                            )}
                             <div className={styles.chatMessageGpt}>
                                 {answer[1].answer !== "" && (
                                     <Answer
@@ -70,7 +70,7 @@ const ChatContainer = ({ examples, answers, onShowCitation, makeApiRequest, isLo
                     {/**handle loading and err states */}
                     {isLoading && lastQuestion && (
                         <div>
-                            <UserChatMessage message={lastQuestion[0]} />
+                            {answers[answers.length - 1][0] != lastQuestion[0] && <UserChatMessage message={lastQuestion[0]} />}
                             <div className={styles.chatMessageGptMinWidth}>
                                 <AnswerLoading />
                             </div>
