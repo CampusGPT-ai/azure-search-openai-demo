@@ -1,3 +1,5 @@
+import { v4 as uuid } from "uuid";
+
 export type AskRequestOverrides = {
     conversationId: string;
     isNewConversation: boolean;
@@ -18,6 +20,17 @@ export type AskResponse = {
     follow_up: string[];
     error?: string;
 };
+
+export function createDefaultAskResponse(conversation_id?: string): AskResponse {
+    return {
+        conversation_id: conversation_id || uuid().toString(),
+        conversation_topic: "",
+        answer: "",
+        thoughts: null,
+        data_points: [],
+        follow_up: []
+    };
+}
 
 export type ChatTurn = {
     user: string;

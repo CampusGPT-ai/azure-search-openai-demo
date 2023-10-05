@@ -14,6 +14,7 @@ import {
     ConversationsModel,
     InterestModel,
     TopicModel,
+    createDefaultAskResponse,
     ProfileModel,
     currentProfileApi,
     topicsAllApi,
@@ -43,7 +44,7 @@ const Chat = () => {
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [error, setError] = useState<unknown>();
     const [activeCitation, setActiveCitation] = useState<string>();
-    const [answers, setAnswers] = useState<[user: string, response: AskResponse][]>([]);
+    const [chatHistory, setChatHistory] = useState<[user: string, response: AskResponse][]>([]);
     const [conversations, setConversations] = useState<ConversationsResponse | undefined>(undefined);
     const [isNewConversation, setIsNewConversation] = useState<boolean>(getLocalStorage<boolean>("isNewConversation") || false);
     const [conversationId, setConversationId] = useState<string>(getLocalStorage<string>("conversationId") || uuid().toString());
@@ -59,31 +60,31 @@ const Chat = () => {
             const initialTopicsList = await getDistinctTopics(topics);
             let filteredTopicsList = null;
             if (checkedInterests.length > 0) {
-                console.log("Initial checkedInterests:", JSON.stringify(checkedInterests, null, 2)); // Log initial checkedInterests
+                //console.log("Initial checkedInterests:", JSON.stringify(checkedInterests, null, 2)); // Log initial checkedInterests
 
                 // Check if all values for checkedInterests.selected are false
                 const allFalse = checkedInterests.every(x => !x.selected);
-                console.log("All selected values false:", allFalse); // Log result of allFalse check
+                //console.log("All selected values false:", allFalse); // Log result of allFalse check
 
                 // If all values are false, send the whole list to the filter
                 // Otherwise, send only the interests with selected set to true
                 const interestsToSend = allFalse ? checkedInterests.map(x => x.interest) : checkedInterests.filter(x => x.selected).map(x => x.interest);
 
-                console.log("Interests to send:", JSON.stringify(interestsToSend, null, 2)); // Log interestsToSend
+                //console.log("Interests to send:", JSON.stringify(interestsToSend, null, 2)); // Log interestsToSend
 
                 filteredTopicsList = await filterTopicsByInterests(topics, interestsToSend);
-                console.log("Returned list of filtered topics:", JSON.stringify(filteredTopicsList, null, 2)); // Log filteredTopicsList
+                //console.log("Returned list of filtered topics:", JSON.stringify(filteredTopicsList, null, 2)); // Log filteredTopicsList
             }
 
             if (filteredTopicsList != null) {
-                console.log("setting topics to filtered topics: " + filteredTopicsList);
+                //console.log("setting topics to filtered topics: " + filteredTopicsList);
                 setTopics(filteredTopicsList);
             } else {
-                console.log("setting topics to initial topics: " + initialTopicsList);
+                //console.log("setting topics to initial topics: " + initialTopicsList);
                 setTopics(initialTopicsList);
             }
         } catch (error) {
-            console.error("Error updating topics:", error);
+            //console.error("Error updating topics:", error);
         }
     };
 
@@ -97,7 +98,7 @@ const Chat = () => {
 
         // Map user interests
         if (user && user.interests) {
-            console.log("setting interests for user: " + user.full_name);
+            //console.log("setting interests for user: " + user.full_name);
             interestsAsModel = user.interests.map(interest => ({
                 interest,
                 selected: false
@@ -139,7 +140,9 @@ const Chat = () => {
         lastQuestionRef.current = "";
         error && setError(undefined);
         setActiveCitation(undefined);
-        setAnswers([]);
+        setChatHistory([]);
+        setActiveConversation(null);
+        setConversationId(uuid().toString());
     };
 
     const onShowCitation = (citation: string) => {
@@ -153,11 +156,11 @@ const Chat = () => {
     };
 
     const onConversationSelected = (conversationId: string) => {
-        //console.log("Conversation selected: id=" + conversationId);
+        console.log("Conversation selected: id=" + conversationId);
         if (conversations != null) {
             const matchingConversation = conversations.list.find(el => el.id === conversationId);
             if (matchingConversation) {
-                //console.log("Found conversation with topic: " + matchingConversation.topic);
+                console.log("Found conversation with topic: " + matchingConversation.topic);
                 setActiveConversation(matchingConversation);
                 setConversationId(matchingConversation.id);
             }
@@ -165,11 +168,11 @@ const Chat = () => {
     };
 
     const handleInterestChange = (interest: InterestModel) => {
-        console.log(`Handling interest change for interest ${JSON.stringify(interest)}`);
+        //console.log(`Handling interest change for interest ${JSON.stringify(interest)}`);
 
         // Call setCheckedInterests to update the state.
         setCheckedInterests(prevInterests => {
-            console.log("Previous checked interests:", JSON.stringify(prevInterests));
+            //console.log("Previous checked interests:", JSON.stringify(prevInterests));
 
             // Create a new array using the map method, where each item is updated based on the condition.
             const updatedInterests = prevInterests.map(item => {
@@ -210,26 +213,31 @@ const Chat = () => {
     };
 
     const makeApiRequest = async (question: string) => {
+        console.log("making api request with question: " + question);
+        const asr: AskResponse = createDefaultAskResponse();
         setIsLoading(true);
-        try {
-            const result = await chatApi(question, answers, conversationId, isNewConversation);
-            setAnswers([...answers, [question, result]]);
-            setConversationId(result.conversation_id);
+        // Step 1: Add the new question with a blank response to chatHistory.
+        setChatHistory((prevHistory: [user: string, response: AskResponse][]) => {
+            const updatedHistory: [user: string, response: AskResponse][] = [...prevHistory, [question, asr]];
+            // Move your API call inside the setChatHistory callback to ensure it's using the updated chatHistory.
+            makeApiCall(updatedHistory, question);
 
-            if (isNewConversation) {
-                //console.log("Received response, including new conversation title, setting title: " + result.conversation_topic);
-                const convo: ConversationsModel = {
-                    id: conversationId,
-                    topic: result.conversation_topic,
-                    start_time: Date.now().toString(),
-                    end_time: "",
-                    interactions: []
-                };
-                conversations?.list.unshift(convo);
-                setIsNewConversation(false);
-            }
+            return updatedHistory; // Return updated history to update the state.
+        });
+    };
+
+    const makeApiCall = async (updatedHistory: [string, AskResponse][], question: string) => {
+        try {
+            const result = await chatApi(question, updatedHistory, conversationId, isNewConversation);
+            // Step 2: Update the last item in updatedHistory to include the response.
+            const updatedChatHistory = [...updatedHistory];
+            updatedChatHistory[updatedChatHistory.length - 1] = [question, result]; // Update the response of the last item.
+            setChatHistory(updatedChatHistory);
+
+            setConversationId(result.conversation_id);
         } catch (e) {
-            setError(e);
+            // Handle errors from chatApi.
+            console.error(e);
         } finally {
             setIsLoading(false);
         }
@@ -251,13 +259,12 @@ const Chat = () => {
     }, [checkedInterests, user, topics]);
 
     useEffect(() => {
-        console.log("questions: ", questionsList);
+        //console.log("questions: ", questionsList);
         updateQuestions();
     }, [selectedTopic]);
 
     useEffect(() => {
         if (user) {
-            setConversationId(uuid().toString());
             setInterestsList();
             setConversations(undefined);
             setIsNewConversation(true);
@@ -267,8 +274,7 @@ const Chat = () => {
     }, [user]);
 
     useEffect(() => {
-        //console.log("new active conversation detected:" + activeConversation?.id);
-        clearChat();
+        console.log("new active conversation detected:" + activeConversation?.id);
         let lastQuestion = "";
         let answers: [user: string, answer: string][] = [];
         activeConversation?.interactions.forEach(i => {
@@ -284,7 +290,7 @@ const Chat = () => {
             ]);
         });
         lastQuestionRef.current = lastQuestion;
-        setAnswers(answers.reverse().map(x => [x[0], JSON.parse(x[1])]));
+        setChatHistory(answers.reverse().map(x => [x[0], JSON.parse(x[1])]));
     }, [activeConversation]);
 
     useEffect(() => {
@@ -319,7 +325,7 @@ const Chat = () => {
                     </StackItem>
                     <StackItem className={styles.chatInputContainer}>
                         <ChatContainer
-                            answers={answers}
+                            answers={chatHistory}
                             makeApiRequest={(question: string) => {
                                 setIsLoading(true);
                                 makeApiRequest(question);

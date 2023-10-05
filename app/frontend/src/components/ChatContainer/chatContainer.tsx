@@ -47,20 +47,22 @@ const ChatContainer = ({ answers, onShowCitation, makeApiRequest, isLoading, err
                     {/** show Q&A  */}
                     {answers.map((answer, index) => (
                         <div key={index}>
-                            <UserChatMessage message={answer[0]} />
+                            {(index === 0 || answers[index - 1][1].answer !== "") && <UserChatMessage message={answer[0]} />}
                             <div className={styles.chatMessageGpt}>
-                                <Answer
-                                    key={index}
-                                    answer={answer[1]}
-                                    onCitationClicked={c => {
-                                        //console.log("citation click event registered for: " + c);
-                                        onShowCitation(c);
-                                    }}
-                                    onFollowupQuestionClicked={q => {
-                                        makeApiRequest(q);
-                                    }}
-                                    showFollowupQuestions={answers.length - 1 === index}
-                                />
+                                {answer[1].answer !== "" && (
+                                    <Answer
+                                        key={index}
+                                        answer={answer[1]}
+                                        onCitationClicked={c => {
+                                            //console.log("citation click event registered for: " + c);
+                                            onShowCitation(c);
+                                        }}
+                                        onFollowupQuestionClicked={q => {
+                                            makeApiRequest(q);
+                                        }}
+                                        showFollowupQuestions={answers.length - 1 === index}
+                                    />
+                                )}
                             </div>
                         </div>
                     ))}

@@ -11,7 +11,7 @@ interface Props {
 const useClasses = makeStyles({
     root: {
         backgroundColor: "transparent",
-        color: "#000",
+        color: "#fff",
         ...shorthands.borderRadius("6px"),
         ...shorthands.border("0"),
         ...shorthands.padding("10px"),
@@ -41,7 +41,7 @@ const useClasses = makeStyles({
         ...shorthands.border("0"),
         ...shorthands.padding("10px"),
         ...shorthands.margin("10px"),
-        fontSize: "14px"
+        fontSize: "16px"
     },
     label: {
         fontWeight: "bold",
@@ -58,7 +58,7 @@ export const Topic = ({ text }: Props) => {
     };
 
     return (
-        <Button className={isSelected ? classes.root : classes.selected} onClick={toggleSelected}>
+        <Button className={isSelected ? classes.root : classes.selected} onClick={toggleSelected} style={{ fontSize: "16px", color: "#fff" }}>
             {text}
         </Button>
     );

@@ -13,13 +13,13 @@ key = AZURE_COSMOS_KEY
 client = CosmosClient(url, credential=key)
 database_name = AZURE_COSMOS_DB
 database = client.get_database_client(database_name)
-container_name = 'profiles'
+container_name = 'conversations'
 container = database.get_container_client(container_name)
 
 # Function to extract all items and save to CSV
 def extract_to_csv(filename):
     # Retrieve all items first to find all possible keys
-    all_items = list(container.query_items(query="SELECT * FROM p", enable_cross_partition_query=True))
+    all_items = list(container.query_items(query="SELECT * FROM c", enable_cross_partition_query=True))
     all_keys = set().union(*(item.keys() for item in all_items))
     
     # Open CSV for writing

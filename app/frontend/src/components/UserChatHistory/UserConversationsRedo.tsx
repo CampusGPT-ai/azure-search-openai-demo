@@ -84,6 +84,7 @@ export const UserConversations = ({ conversations, onConversationClicked, onNewC
                             setSelectedButtonId(x.id);
                             onConversationClicked(x.id);
                         }}
+                        style={{ fontSize: "16px", padding: "10px", margin: "10px", height: "100%" }}
                     >
                         <div className={styles.btnLabel}>
                             <Chat16Filled />
