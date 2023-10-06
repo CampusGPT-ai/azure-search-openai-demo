@@ -1,24 +1,24 @@
 import { useState, useEffect, useContext } from "react";
-import { Outlet, NavLink, Link, useOutletContext } from "react-router-dom";
-import { Persona, Subtitle2 } from "@fluentui/react-components";
+import { Outlet, NavLink, Link } from "react-router-dom";
+
 import seal from "../../assets/fsu-seal-3d-160x160.png";
-import avatar from "../../assets/avatars/reinhold.png";
 import { Image, ImageFit } from "@fluentui/react";
 import { UserContext, TopicContext } from "../../contextVariables";
 
 import styles from "./Layout.module.css";
-import { ProfileModel, TopicModel, currentProfileApi, topicsAllApi } from "../../api";
+import { ProfileModel, currentProfileApi, topicsAllApi } from "../../api";
 import dylan from "../../assets/avatars/dylan.png";
 import jamal from "../../assets/avatars/jamal.png";
 import tiffany from "../../assets/avatars/tiffany.png";
+import reinhold from "../../assets/avatars/reinhold.png";
 //TODO: serve images from API
-import { FluentProvider, teamsLightTheme, BrandVariants, Theme, createDarkTheme, createLightTheme } from "@fluentui/react-components";
-import { resultItem } from "@fluentui/react/lib/components/ExtendedPicker/PeoplePicker/ExtendedPeoplePicker.scss";
+import { FluentProvider, Theme, BrandVariants, createDarkTheme, createLightTheme } from "@fluentui/react-components";
 
 const avatarImages: Record<string, string> = {
     dylan,
     jamal,
-    tiffany
+    tiffany,
+    reinhold
 };
 const demoTheme: BrandVariants = {
     10: "#020404",
@@ -59,21 +59,25 @@ const Layout = () => {
     log it
     */
     const { setUser } = useContext(UserContext);
+    const { user } = useContext(UserContext);
+    const { selectedProfile, setSelectedProfile } = useContext(UserContext);
     const { setTopics } = useContext(TopicContext);
     const [loggedInUser, setLoggedInUser] = useState<ProfileModel | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [error, setError] = useState<unknown>();
 
-    // TODO: this is a hack to get the current user loaded in the layout component; need to find a way to load it once in layout and then pass it down to the other components
     const makeCurrentUserApiRequest = async () => {
-        setIsLoading(true);
-        try {
-            const result = await currentProfileApi();
-            setLoggedInUser(result.profile);
-        } catch (e) {
-            setError(e);
-        } finally {
-            setIsLoading(false);
+        console.log("logging in user for profile: " + selectedProfile); //this is logging "none"
+        if (selectedProfile !== "none") {
+            setIsLoading(true);
+            try {
+                const result = await currentProfileApi();
+                setLoggedInUser(result.profile);
+            } catch (e) {
+                console.log("no user logged in - keeping default profile with: " + user?.avatar);
+            } finally {
+                setIsLoading(false);
+            }
         }
     };
 
@@ -82,7 +86,7 @@ const Layout = () => {
         try {
             const result = await topicsAllApi();
             setTopics(result.topic);
-            //console.log("got topics from API: " + result);
+            console.log("got topics from API: " + JSON.stringify(result));
         } catch (e) {
             setError(e);
         } finally {
@@ -90,10 +94,11 @@ const Layout = () => {
         }
     };
 
-    const getProfileApiRequest = useEffect(() => {
+    useEffect(() => {
+        console.log("detected change in selected profile - reinitializing data");
         makeCurrentUserApiRequest();
         makeTopicApiRequest();
-    }, []);
+    }, [selectedProfile]);
 
     useEffect(() => {
         //console.log("detected change in loggedInUser in layout: " + loggedInUser?.full_name);
@@ -121,16 +126,10 @@ const Layout = () => {
                                 <li>
                                     <NavLink to="/profile" className={({ isActive }) => (isActive ? styles.headerNavPageLinkActive : styles.headerNavPageLink)}>
                                         <div className={styles.profileBox}>
-                                            <span className={styles.avatar}>{loggedInUser?.full_name}</span>
+                                            <span className={styles.avatar}>{user?.full_name}</span>
 
-                                            {loggedInUser?.avatar ? (
-                                                <img
-                                                    src={avatarImages[loggedInUser.avatar]}
-                                                    alt="User Avatar"
-                                                    width={60}
-                                                    height={60}
-                                                    style={{ borderRadius: "50%" }}
-                                                />
+                                            {user?.avatar ? (
+                                                <img src={avatarImages[user.avatar]} alt="User Avatar" width={60} height={60} style={{ borderRadius: "50%" }} />
                                             ) : (
                                                 <span>Click to login </span>
                                             )}

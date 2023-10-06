@@ -79,7 +79,7 @@ const ChatContainer = ({ examples, answers, onShowCitation, makeApiRequest, isLo
 
                     {lastQuestion && error ? (
                         <div>
-                            <UserChatMessage message={lastQuestion[0]} />
+                            {answers[answers.length - 1][0] != lastQuestion[0] && <UserChatMessage message={lastQuestion[0]} />}
                             <div className={styles.chatMessageGptMinWidth}>
                                 <AnswerError
                                     error={error.toString()}

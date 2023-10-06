@@ -1,4 +1,14 @@
-import { AskResponse, ChatTurn, ChatRequest, InterestsResponse, ConversationsResponse, ProfileResponse, ProfilesResponse, TopicResponse } from "./models";
+import {
+    AskResponse,
+    ChatTurn,
+    ChatRequest,
+    InterestsResponse,
+    ConversationsResponse,
+    ProfileResponse,
+    ProfilesResponse,
+    TopicResponse,
+    createDefaultProfile
+} from "./models";
 
 export async function chatApi(question: string, answers: [string, AskResponse][], conversationId?: string, isNewConversation?: boolean): Promise<AskResponse> {
     const history: ChatTurn[] = answers?.map(a => ({ user: a[0], bot: a[1].answer })) || [];
@@ -77,35 +87,48 @@ export async function demoProfilesApi(): Promise<ProfilesResponse> {
 }
 
 export async function conversationsApi(): Promise<ConversationsResponse> {
-    const response = await fetch("/conversations", {
-        method: "GET",
-        headers: {
-            "Content-Type": "application/json"
+    try {
+        const response = await fetch("/conversations", {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json"
+            }
+        });
+
+        const parsedResponse: ConversationsResponse = await response.json();
+        if (response.status > 299 || !response.ok) {
+            throw Error(parsedResponse.error || "Unknown error");
+        } else {
+            return parsedResponse;
         }
-    });
-
-    const parsedResponse: ConversationsResponse = await response.json();
-    if (response.status > 299 || !response.ok) {
-        throw Error(parsedResponse.error || "Unknown error");
+    } catch (e) {
+        console.log("raising api error to caller: " + e);
+        throw e;
     }
-
-    return parsedResponse;
 }
 
 export async function currentProfileApi(): Promise<ProfileResponse> {
-    const response = await fetch("/current_profile", {
-        method: "GET",
-        headers: {
-            "Content-Type": "application/json"
+    try {
+        const response = await fetch("/current_profile", {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json"
+            }
+        });
+
+        const parsedResponse: ProfileResponse = await response.json();
+        if (response.status > 299 || !response.ok) {
+            console.log("no user logged in - keeping default profile");
+            return {
+                profile: createDefaultProfile()
+            };
+        } else {
+            return parsedResponse;
         }
-    });
-
-    const parsedResponse: ProfileResponse = await response.json();
-    if (response.status > 299 || !response.ok) {
-        throw Error(parsedResponse.error || "Unknown error");
+    } catch (e) {
+        console.log("raising api error to caller: " + e);
+        throw e;
     }
-
-    return parsedResponse;
 }
 
 export function getCitationFilePath(citation: string): string {

@@ -85,6 +85,7 @@ class Profile:
         p = None
         try:
             p = cls._cosmos_container.read_item(item=id, partition_key=id)
+            
         except exceptions.CosmosResourceNotFoundError:
             # leave profile as none
             p = None

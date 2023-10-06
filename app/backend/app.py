@@ -102,6 +102,13 @@ async def ask():
 async def chat():
     if not request.is_json:
         return jsonify({"error": "request must be json"}), 415
+    
+    #print("checking session config: " + str(session[CONFIG_CURRENT_USER]))
+
+    #handle not logged in?  maybe better way to do this
+    if not session.get(CONFIG_CURRENT_USER) :
+        session[CONFIG_CURRENT_USER] = "0d14fcdc-e531-4f39-95a9-22a3df9359b1"
+
     request_json = await request.get_json()
     approach = request_json["approach"]
     try:
@@ -133,43 +140,54 @@ async def get_topics() :
 
 @bp.route("/conversations", methods=["GET"])
 async def get_conversations():
-    profile_id = session[CONFIG_CURRENT_USER]
-    convos = Conversation.load_by_user(profile_id)
-    rv = []
-    for convo in convos:
-        json = convo.to_json()
-        interactions = ChatHistory.load_by_conversation(convo.id)
-        # we are only interested in conversation that had an interaction
-        if (len(interactions) > 0):
-            json["interactions"] = interactions
-            rv.append(json)
+    try: 
+        profile_id = session[CONFIG_CURRENT_USER]
+        if profile_id: 
+            convos = Conversation.load_by_user(profile_id)
+            rv = []
+            for convo in convos:
+                json = convo.to_json()
+                interactions = ChatHistory.load_by_conversation(convo.id)
+                # we are only interested in conversation that had an interaction
+                if (len(interactions) > 0):
+                    json["interactions"] = interactions
+                    rv.append(json)
 
-    return jsonify({"list": rv})
+            return jsonify({"list": rv})
+        else: 
+            return jsonify({"message": "No user is logged in"}), 404
+    except: 
+        return jsonify({"message": "No user is logged in"}), 404
 
 @bp.route("/demo_login", methods=["POST"], )
 async def demoLogin():  
     if request.method == "POST":
-        profile_id = (await request.form)["profile_id"]
-        profile = Profile.load_by_id(profile_id)
-        session[CONFIG_CURRENT_USER] = profile.id
-        if profile is None:
-            return "Error: User not found", 404
-        
-        response = redirect("/")
-        response.content_type = "text/html"
-        return response
+        try: 
+            
+            profile_id = (await request.form)["profile_id"]
+            print("setting demo login for: " + profile_id)
+            profile = Profile.load_by_id(profile_id)
+            session[CONFIG_CURRENT_USER] = profile.id
+            if profile is None:
+                return jsonify({"message": "Error: User not found"}), 404
+            else: 
+                
+                return jsonify({"message": "success"}), 200
+        except Exception as e: 
+            return jsonify({"message": "User Profile not found" + str(e)}), 404
     
 @bp.route("/current_profile", methods=["GET"])
 async def get_current_profile():
     try:
         profile_id = session[CONFIG_CURRENT_USER]
+
         profile = Profile.load_by_id(profile_id)
         if (profile is None):
-            return "No user is logged in", 404
+            return jsonify({"message": "No user is logged in"}), 404
         
         return jsonify({ "profile": profile.to_json()})
     except Exception as e:
-        return "No user is logged in", 404
+         return jsonify({"message": "No user is logged in"}), 404
 
 @bp.route("/demo_profiles", methods=["GET"])
 async def get_demo_profiles() :

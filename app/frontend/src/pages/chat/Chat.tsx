@@ -14,11 +14,7 @@ import {
     ConversationsModel,
     InterestModel,
     TopicModel,
-    createDefaultAskResponse,
-    ProfileModel,
-    currentProfileApi,
-    topicsAllApi,
-    TopicResponse
+    createDefaultAskResponse
 } from "../../api";
 
 import { InterestList } from "../../components/Interests/InterestList";
@@ -28,11 +24,10 @@ import { UserConversations } from "../../components/UserChatHistory/UserConversa
 import styles from "./Chat.module.css";
 
 const Chat = () => {
-    const { user } = useContext(UserContext);
+    const { user, selectedProfile, setSelectedProfile } = useContext(UserContext);
     const { topics } = useContext(TopicContext);
     const prevTopicsRef = useRef<TopicModel[]>([]);
     const prevCheckedInterestsRef = useRef<InterestModel[]>([]);
-    const fakeList: string[] = ["test 1", "test 2", "test 3"];
     const [topicsList, setTopics] = useState<string[]>([]);
     const [interestList, setInterests] = useState<InterestModel[]>([]);
     const [selectedTopic, setSelectedTopic] = useState<string>("");
@@ -57,10 +52,11 @@ const Chat = () => {
 
     const updateTopics = async () => {
         try {
+            console.log("updating topics list for topics len " + topics.length.toString());
             const initialTopicsList = await getDistinctTopics(topics);
             let filteredTopicsList = null;
-            if (checkedInterests.length > 0) {
-                //console.log("Initial checkedInterests:", JSON.stringify(checkedInterests, null, 2)); // Log initial checkedInterests
+            if (checkedInterests.length > 0 && selectedProfile != "none") {
+                console.log("Initial checkedInterests:", JSON.stringify(checkedInterests, null, 2)); // Log initial checkedInterests
 
                 // Check if all values for checkedInterests.selected are false
                 const allFalse = checkedInterests.every(x => !x.selected);
@@ -70,21 +66,21 @@ const Chat = () => {
                 // Otherwise, send only the interests with selected set to true
                 const interestsToSend = allFalse ? checkedInterests.map(x => x.interest) : checkedInterests.filter(x => x.selected).map(x => x.interest);
 
-                //console.log("Interests to send:", JSON.stringify(interestsToSend, null, 2)); // Log interestsToSend
+                console.log("Interests to send:", JSON.stringify(interestsToSend, null, 2)); // Log interestsToSend
 
                 filteredTopicsList = await filterTopicsByInterests(topics, interestsToSend);
-                //console.log("Returned list of filtered topics:", JSON.stringify(filteredTopicsList, null, 2)); // Log filteredTopicsList
+                console.log("Returned list of filtered topics:", JSON.stringify(filteredTopicsList, null, 2)); // Log filteredTopicsList
             }
 
-            if (filteredTopicsList != null) {
-                //console.log("setting topics to filtered topics: " + filteredTopicsList);
+            if (filteredTopicsList != null && filteredTopicsList.length > 0) {
+                console.log("setting topics to filtered topics: " + filteredTopicsList);
                 setTopics(filteredTopicsList);
             } else {
-                //console.log("setting topics to initial topics: " + initialTopicsList);
+                console.log("setting topics to initial topics: " + initialTopicsList);
                 setTopics(initialTopicsList);
             }
         } catch (error) {
-            //console.error("Error updating topics:", error);
+            console.error("Error updating topics:", error);
         }
     };
 
@@ -266,6 +262,7 @@ const Chat = () => {
     useEffect(() => {
         if (user) {
             setInterestsList();
+            updateTopics();
             setConversations(undefined);
             setIsNewConversation(true);
             clearChat();
@@ -302,7 +299,12 @@ const Chat = () => {
     }, [isNewConversation]);
     return (
         <div className={styles.container}>
-            <div className={styles.contentHeader}>
+            <div
+                className={styles.contentHeader}
+                style={{
+                    display: selectedProfile === "none" ? "none" : "block"
+                }}
+            >
                 <h3>Your Interests</h3>
                 <div className={styles.contentSection}>
                     <InterestList list={interestList} onInterestChanged={handleInterestChange} />
@@ -311,7 +313,13 @@ const Chat = () => {
 
             <div className={styles.chatSection}>
                 <Stack horizontal horizontalAlign="stretch">
-                    <StackItem className={styles.chatHistoryContainer} disableShrink>
+                    <StackItem
+                        className={styles.chatHistoryContainer}
+                        disableShrink
+                        style={{
+                            display: selectedProfile === "none" ? "none" : "block"
+                        }}
+                    >
                         <UserConversations //chat history
                             conversations={conversationsList}
                             onConversationClicked={onConversationSelected}

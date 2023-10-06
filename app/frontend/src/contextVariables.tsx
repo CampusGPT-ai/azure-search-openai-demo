@@ -4,7 +4,9 @@ import { ProfileModel, TopicModel } from "./api/models";
 // Initial context state
 const initialUserState = {
     user: null as ProfileModel | null,
-    setUser: (_user: ProfileModel | null) => {}
+    setUser: (_user: ProfileModel | null) => {},
+    setSelectedProfile: (_selectedProfile: string) => {},
+    selectedProfile: "none" as string
 };
 
 const initialTopicState = {

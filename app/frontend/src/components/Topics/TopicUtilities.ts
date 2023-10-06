@@ -21,9 +21,18 @@ export const filterTopicsByInterests = async (topics: TopicModel[], interests: s
 };
 
 export const getDistinctTopics = async (topics: TopicModel[]): Promise<string[]> => {
-    //console.log("mapping topics to distinct list:" + topics);
-    const distinctTopics = [...new Set(topics.map(topic => topic.question))];
-    return distinctTopics.slice(0, 4);
+    const topicCounts: { [key: string]: number } = {};
+
+    topics.forEach(topic => {
+        const name = topic.question;
+        topicCounts[name] = (topicCounts[name] || 0) + 1;
+    });
+
+    const topicCountEntries = Object.entries(topicCounts);
+    const sortedTopicCountEntries = topicCountEntries.sort((a, b) => b[1] - a[1]);
+    const topTopicCountEntries = sortedTopicCountEntries.slice(0, 4);
+    const topTopics = topTopicCountEntries.map(entry => entry[0]);
+    return topTopics;
 };
 
 export const getQuestionsByTopic = async (topics: TopicModel[], topicName: string): Promise<string[]> => {

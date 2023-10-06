@@ -112,3 +112,30 @@ export type ProfileModel = {
     };
     courses: Array<string>;
 };
+
+export function createDefaultProfile(): ProfileModel {
+    return {
+        id: uuid().toString(),
+        user_id: "default",
+        full_name: "Demo User",
+        avatar: "reinhold",
+        interests: ["none"],
+        demographics: {
+            Ethnicity: "white",
+            Gender: "male"
+        },
+        academics: {
+            "Academic Year": "1",
+            Major: "Undeclared",
+            Minor: "Undeclared"
+        },
+        courses: []
+    };
+}
+
+export function createDefaultConversation(): ConversationsResponse {
+    return {
+        list: [],
+        error: ""
+    };
+}

@@ -113,7 +113,13 @@ Only generate questions and do not generate any text before or after the questio
 
 
         #load profile from session
-        current_profile = Profile.load_by_id(session[CONFIG_CURRENT_USER])
+    
+        try: 
+            current_profile = Profile.load_by_id(session[CONFIG_CURRENT_USER])
+        except Exception as e: 
+            #handle not logged in (don't augment chat?)
+            current_profile = Profile( "","", "", "","", "", "", "","")
+            
         profile_augment = ProfileAugmentations(current_profile)
 
         # manage creation or loading of conversation
@@ -126,7 +132,8 @@ Only generate questions and do not generate any text before or after the questio
         currentConversation = Conversation.create_if_not_exists(
             id=conversation_id, 
             session_id=self.current_session,
-            user_id=session[CONFIG_CURRENT_USER]
+            user_id = session[CONFIG_CURRENT_USER]
+
         )
 
         # load history from persisted store based on the conversation
