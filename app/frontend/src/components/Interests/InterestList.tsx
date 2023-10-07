@@ -15,10 +15,10 @@ export const InterestList = ({ list, onInterestChanged }: Props) => {
     };
 
     return (
-        <>
+        <div className={styles.interestList}>
             {list.map((x, i) => (
                 <Interest text={x.interest} selected={false} onCheckChange={loggedOnInterestChanged} />
             ))}
-        </>
+        </div>
     );
 };

@@ -1,0 +1,40 @@
+.profileContainer {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+    padding-top: 100px;
+    padding-bottom: 50px;
+}
+.profileContainer,
+.profileContainerSelected {
+    text-align: center;
+    color: #ffffff;
+    border-radius: 6px;
+    background: linear-gradient(105deg, #782f40 46%, #41080091 100%);
+    padding: 12px;
+    font-size: 16px;
+    text-align: left;
+    box-shadow:
+        4px 4px 8px rgba(0, 0, 0, 0.14),
+        0px 0px 4px rgba(0, 0, 0, 0.12);
+}
+
+.coursePill {
+    background-color: #d0cecebf;
+    color: rgb(84, 82, 82);
+    font-weight: 500;
+    border-radius: 16px;
+    padding-left: 8px;
+    padding-right: 8px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+}
+
+.coursesGrid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    margin-top: 12px;
+    column-gap: 6px;
+    row-gap: 6px;
+}

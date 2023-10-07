@@ -1,12 +1,14 @@
 import { useState, useEffect, useContext } from "react";
-import { Outlet, NavLink, Link } from "react-router-dom";
-
+import { Outlet, NavLink, Link, useOutletContext } from "react-router-dom";
 import seal from "../../assets/fsu-seal-3d-160x160.png";
 import { Image, ImageFit } from "@fluentui/react";
+import { Popover, PopoverTrigger, PopoverSurface } from "@fluentui/react-components";
+import { CaretDown24Filled } from "@fluentui/react-icons";
 import { UserContext, TopicContext } from "../../contextVariables";
+import { ProfilePopover } from "../../components/ProfilePopover/ProfilePopover";
 
 import styles from "./Layout.module.css";
-import { ProfileModel, currentProfileApi, topicsAllApi } from "../../api";
+import { InterestModel, ProfileModel, TopicModel, currentProfileApi, topicsAllApi } from "../../api";
 import dylan from "../../assets/avatars/dylan.png";
 import jamal from "../../assets/avatars/jamal.png";
 import tiffany from "../../assets/avatars/tiffany.png";
@@ -21,22 +23,22 @@ const avatarImages: Record<string, string> = {
     reinhold
 };
 const demoTheme: BrandVariants = {
-    10: "#020404",
-    20: "#101A1D",
-    30: "#152B32",
-    40: "#173842",
-    50: "#194653",
-    60: "#195464",
-    70: "#186276",
-    80: "#167188",
-    90: "#10809B",
-    100: "#038FAE",
-    110: "#389DB9",
-    120: "#5CAAC3",
-    130: "#79B7CC",
-    140: "#93C5D6",
-    150: "#ADD2DF",
-    160: "#C6DFE9"
+    10: "#050202",
+    20: "#221215",
+    30: "#3B1B21",
+    40: "#4F222B",
+    50: "#642936",
+    60: "#793041",
+    70: "#84404E",
+    80: "#90505C",
+    90: "#9B606A",
+    100: "#A67078",
+    110: "#B08087",
+    120: "#BB9096",
+    130: "#C6A0A5",
+    140: "#D0B1B5",
+    150: "#DBC2C5",
+    160: "#E5D3D5"
 };
 
 const lightTheme: Theme = {
@@ -105,6 +107,14 @@ const Layout = () => {
         setUser(loggedInUser);
     }, [loggedInUser]);
 
+    const { user } = useContext(UserContext);
+    let loggedIn: boolean = user != null;
+    let profile = user == null ? undefined : user;
+
+    const onInterestChanged = (interest: InterestModel) => {
+        console.log("interest changed in Layout " + interest.interest + " selected:" + interest.selected);
+    };
+
     return (
         <FluentProvider theme={lightTheme}>
             <div className={styles.layout}>
@@ -120,21 +130,40 @@ const Layout = () => {
                         <Link to="/" className={styles.headerTitleContainer}>
                             <h3 className={styles.headerTitle}>Welcome to your co-pilot</h3>
                         </Link>
-
                         <nav>
                             <ul className={styles.headerNavList}>
                                 <li>
-                                    <NavLink to="/profile" className={({ isActive }) => (isActive ? styles.headerNavPageLinkActive : styles.headerNavPageLink)}>
-                                        <div className={styles.profileBox}>
-                                            <span className={styles.avatar}>{user?.full_name}</span>
+                                    <div className={styles.profileBox}>
+                                        <span className={styles.avatar}>{loggedInUser?.full_name}</span>
 
-                                            {user?.avatar ? (
-                                                <img src={avatarImages[user.avatar]} alt="User Avatar" width={60} height={60} style={{ borderRadius: "50%" }} />
-                                            ) : (
+                                        {loggedInUser?.avatar ? (
+                                            <>
+                                                <img
+                                                    src={avatarImages[loggedInUser.avatar]}
+                                                    alt="User Avatar"
+                                                    width={50}
+                                                    height={50}
+                                                    style={{ borderRadius: "50%" }}
+                                                />
+
+                                                <Popover>
+                                                    <PopoverTrigger>
+                                                        <CaretDown24Filled style={{ marginLeft: "6px" }} />
+                                                    </PopoverTrigger>
+                                                    <PopoverSurface style={{ backgroundColor: "lightgray" }}>
+                                                        <ProfilePopover profile={loggedInUser} onInterestChanged={onInterestChanged}></ProfilePopover>
+                                                    </PopoverSurface>
+                                                </Popover>
+                                            </>
+                                        ) : (
+                                            <NavLink
+                                                to="/profile"
+                                                className={({ isActive }) => (isActive ? styles.headerNavPageLinkActive : styles.headerNavPageLink)}
+                                            >
                                                 <span>Click to login </span>
-                                            )}
-                                        </div>
-                                    </NavLink>
+                                            </NavLink>
+                                        )}
+                                    </div>
                                 </li>
                                 <li className={styles.headerNavLeftMargin}>
                                     <NavLink to="/" className={({ isActive }) => (isActive ? styles.headerNavPageLinkActive : styles.headerNavPageLink)}>

@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 
 import { Image } from "@fluentui/react-components";
 import { Subtitle2, Title2 } from "@fluentui/react-components";
+import { ProfileModel, InterestModel } from "../../api";
+import { InterestList } from "../Interests/InterestList";
 
 import styles from "./DemoProfile.module.css";
 
@@ -35,11 +37,19 @@ export interface Profile {
 }
 
 interface Props {
-    profile: Profile;
+    profile: ProfileModel;
+    isMe?: boolean;
     onSelectProfile: (id: string, el: HTMLDivElement) => void;
+    onInterestChanged: (interests: InterestModel) => void;
 }
 
-export const DemoProfile = ({ profile: { id, user_id, full_name, avatar, interests, demographics, academics, courses }, onSelectProfile }: Props) => {
+export const DemoProfile = ({
+    profile: { id, user_id, full_name, avatar, interests, demographics, academics, courses },
+    isMe,
+    onSelectProfile,
+    onInterestChanged
+}: Props) => {
+    let isMeViewing: boolean = isMe == true;
     let demoStr: string = "";
     let demo_keys = Object.keys(demographics);
     let demo_values = Object.values(demographics);
@@ -68,11 +78,14 @@ export const DemoProfile = ({ profile: { id, user_id, full_name, avatar, interes
         interestStr = interestStr + ", " + x;
     });
 
+    let interestList: Array<InterestModel> = [];
+    if (interests) interestList = interests.map((x, i, arr) => ({ interest: x, selected: false }));
+
     return (
         <div
             className={styles.profileContainer}
             onClick={el => {
-                el.currentTarget.className = styles.profileContainerSelected;
+                if (!isMeViewing) el.currentTarget.className = styles.profileContainerSelected;
                 onSelectProfile(id, el.currentTarget);
             }}
         >
@@ -82,14 +95,24 @@ export const DemoProfile = ({ profile: { id, user_id, full_name, avatar, interes
             <div className={styles.avatarContainer}>
                 <Image width={200} height={200} shape="circular" alt={full_name} src={avatars.get(avatar)}></Image>
             </div>
-            <div className={styles.infoContainer}>
-                <Subtitle2>Academic Profile</Subtitle2>
-                <div>{acadStr}</div>
-            </div>
-            <div className={styles.infoContainer}>
-                <Subtitle2>Demographics Information</Subtitle2>
-                <div>{demoStr}</div>
-            </div>
+            {!isMeViewing && (
+                <div className={styles.infoContainer}>
+                    <Subtitle2>Academic Profile</Subtitle2>
+                    <div>{acadStr}</div>
+                </div>
+            )}
+            {!isMeViewing && (
+                <div className={styles.infoContainer}>
+                    <Subtitle2>Demographics Information</Subtitle2>
+                    <div>{demoStr}</div>
+                </div>
+            )}
+            {!isMeViewing && (
+                <div className={styles.contentSection}>
+                    <h1>Your Interests</h1>
+                    <InterestList list={interestList} onInterestChanged={onInterestChanged} />
+                </div>
+            )}
         </div>
     );
 };

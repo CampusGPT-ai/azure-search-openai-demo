@@ -92,7 +92,7 @@ const ProfileSetup = () => {
                         {profiles.map((profile, index) => (
                             <div key={index}>
                                 <StackItem className={styles.profileContainer}>
-                                    <DemoProfile profile={profile} onSelectProfile={onSelectProfile}></DemoProfile>
+                                    <DemoProfile profile={profile} onSelectProfile={onSelectProfile} onInterestChanged={() => {}}></DemoProfile>
                                 </StackItem>
                             </div>
                         ))}
