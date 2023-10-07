@@ -4,6 +4,7 @@ import openai
 import time
 import uuid
 import json
+import re
 
 from azure.search.documents.aio import SearchClient
 from azure.search.documents.models import QueryType
@@ -139,6 +140,11 @@ Only generate questions and do not generate any text before or after the questio
         # load history from persisted store based on the conversation
         history = ChatHistory.load_by_conversation(currentConversation.id)
 
+        print("History")
+        for h in history:
+            print(h)    
+            print()
+
         # QUERY STEP 1: Generate an optimized keyword search query based on the chat history and the last question
         messages = self.get_messages_from_history(
             self.query_prompt_template,
@@ -148,10 +154,10 @@ Only generate questions and do not generate any text before or after the questio
             self.query_prompt_few_shots + profile_augment.generate_profile_few_shot(),
             self.chatgpt_token_limit - len(user_q)
             )
-        #print()
-        #print("Query1")
-        #for message in messages:
-        #    print(message)
+        print()
+        print("Query1")
+        for message in messages:
+            print(message)
         chat_completion = await openai.ChatCompletion.acreate(
             deployment_id=self.chatgpt_deployment,
             model=self.chatgpt_model,
@@ -161,7 +167,7 @@ Only generate questions and do not generate any text before or after the questio
             n=1)
 
         query_text = chat_completion.choices[0].message.content
-        #print(query_text)
+        print(query_text)
         if query_text.strip() == "0":
             query_text = user_query # Use the last user input if we failed to generate a better query
 
@@ -169,8 +175,6 @@ Only generate questions and do not generate any text before or after the questio
 
 
         # QUERY STEP 2: Retrieve relevant documents from the search index with the GPT optimized query
-
-        # TODO: in order to filter search results, modify the filter based on query results
         
         # If retrieval mode includes vectors, compute an embedding for the query
         if has_vector:
@@ -228,38 +232,49 @@ Only generate questions and do not generate any text before or after the questio
 
 
          # QUERY STEP 3: Generate a contextual and content specific answer using the search results and chat history
+        
+        #chat_conversation = self.system_message_chat_conversation
+       # messages = self.get_messages_from_history(
+       #    self.system_message_chat_conversation,
+       #     self.chatgpt_model,
+       #     [],
+       #     query_text + "\n\nSources:\n" + content, # KEVIN Try the query text
+       #     max_tokens=self.chatgpt_token_limit,
+       #     few_shots=profile_augment.generate_profile_few_shot()
+       # ) 
 
-        chat_conversation = self.system_message_chat_conversation
-        messages = self.get_messages_from_history(
-            self.system_message_chat_conversation,
-            self.chatgpt_model,
-            [],
-            user_query + "\n\nSources:\n" + content, # Model does not handle lengthy system messages well. Moving sources to latest user conversation to solve follow up questions prompt.
-            max_tokens=self.chatgpt_token_limit,
-            few_shots=profile_augment.generate_profile_few_shot()
-        )
-
-        #print()
-        #print("Query3")
-        #for message in messages:
-        #    print()
-        #    print(message)
+        print("Kevin Query3")
+        kw_messages = generate_gpt_prompt(self.chatgpt_model, current_profile, history, user_query, content)
+        for message in kw_messages:
+            print()
+            print(message)
+        
         chat_completion = await openai.ChatCompletion.acreate(
             deployment_id=self.chatgpt_deployment,
             model=self.chatgpt_model,
-            messages=messages,
+            messages=kw_messages,
             temperature=0,
             max_tokens=1024,
             n=1)
 
 
-        #print()
-        #print("Chat Completion")
-        #print(chat_completion.choices[0].message.content)
+        print()
+        print("Chat Completion")
+        print()
+        print(chat_completion.choices[0].message.content)
+
 
         #chat_json_encoded = encode_for_json(chat_completion.choices[0].message.content)
-        chat_json_encoded = chat_completion.choices[0].message.content.replace("\n", "\\n")
-        chat_content_json = json.loads(chat_json_encoded)
+        chat_json_encoded = escape_string(chat_completion.choices[0].message.content)
+        print()
+        print(chat_json_encoded)
+        print()
+        try:
+            chat_content_json = json.loads(chat_json_encoded)
+        except json.JSONDecodeError as e:
+            print(f"Error decoding JSON: {e}")
+            print(f"Invalid JSON content: {chat_json_encoded}")
+            raise e
 
         # persist the current conversation and update end time
         currentConversation.end_time = time.time()
@@ -277,6 +292,7 @@ Only generate questions and do not generate any text before or after the questio
             bot_content=chat_content_json.get("answer")
         )
 
+
         # STEP 4: Generate a list of follow up questions
         messages = self.get_messages_from_history(
             self.follow_up_prompt_template,
@@ -287,10 +303,10 @@ Only generate questions and do not generate any text before or after the questio
             self.chatgpt_token_limit - len(user_q), 
             5
             )
-        #print()
-        #print("Query4")
-        #for message in messages:
-        #    print(message)
+        print()
+        print("Query4")
+        for message in messages:
+            print(message)
         chat_completion = await openai.ChatCompletion.acreate(
             deployment_id=self.chatgpt_deployment,
             model=self.chatgpt_model,
@@ -357,3 +373,71 @@ def encode_for_json(input_str):
     json_encoded = json.dumps(input_str)
     # Strip the outer double quotes
     return json_encoded[1:-1]
+
+@staticmethod
+def generate_gpt_prompt(model_id, profile, conversation_history, user_question, sources, max_tokens=4096):
+    # Start with the system message
+    
+    system_instruction = """
+You are an assistant specialized in academic advising. Follow these guidelines:
+- Provide concise answers.
+- You have inherent knowledge about the campus, courses, and other academic information. 
+- Answer questions as if this knowledge is innate to you while giving references to the sources of the information.
+- Do not state "Based on the information provided" or similair phrases.
+- Use ONLY the information from the provided sources. Do not assume or invent any details.
+- If the data available is insufficient to provide a definitive answer, state that you don't have enough information.
+- Reference each fact you use from a source using square brackets, e.g., [info1.txt]. Do not merge facts from different sources; list them separately. e.g. [info1.txt][info2.pdf].
+- If the user's query pertains to classes or courses, always reference and list the classes the student has previously taken.
+- For any lists of text less than 15 characters give the list as three columns of text.
+- For details in table format, return them as an HTML table, not in markdown or any other format.
+- If a clarifying question is needed, ask the user.
+Return results in JSON format with the answer and topic as separate elements, make sure what is returned is proper JSON, following this example:
+{ "topic": "conversation topic", "answer": "response to user question" }.
+"""
+    message_builder = MessageBuilder(system_instruction, model_id)
+    
+    # User info
+    if profile is not None: 
+        major = profile.academics.get("Major")
+        year = profile.academics.get("Academic Year")
+        classes_list = profile.courses
+        message_builder.append_message('user', f"Major: {major}\nYear: {year}\nClasses taken: {', '.join(classes_list)}")
+    
+    # Conversation history
+    for h in conversation_history[:-1]:
+        if bot_msg := h.get("bot"):
+            message_builder.append_message(ChatReadRetrieveReadApproach.ASSISTANT, bot_msg)
+        if user_msg := h.get("user"):
+            message_builder.append_message(ChatReadRetrieveReadApproach.USER, user_msg)
+        if message_builder.token_length > max_tokens:
+            break
+
+    # New user question and sources
+    if any(substring in user_question for substring in ["class", "course", "classes", "courses"]):
+            user_question = user_question + "\n\nYour answer should two bullet point sections that call out the classes taken and those that still need to be taken or are a set of requirements.  If there are no classes taken leave that bullet list out."
+
+    source_str = sources
+    message_builder.append_message('user', f"{user_question}\n\nSources:\n{source_str}",2)
+    
+    messages = message_builder.messages
+    return messages
+
+@staticmethod
+def escape_string(s):
+    s = s.replace('\\', '\\\\')   # Escape backslashes first
+    #s = s.replace('"', '\\"')     # Escape double quotes
+    s = s.replace('\b', '\\b')    # Escape backspaces
+    s = s.replace('\f', '\\f')    # Escape form feeds
+    s = s.replace('\n', '\\n')    # Escape newlines
+    s = s.replace('\r', '\\r')    # Escape carriage returns
+    s = s.replace('\t', '\\t')    # Escape tabs
+
+    match = re.search(r'(\[.*?\])\s*}$', s)
+    if match:
+        content_with_brackets = match.group(1)
+        
+        # Replace the "answer" block with the appended content
+        s = re.sub(r'("answer": ".*?")\s*\[.*?\]\s*}$', r'\1 ' + content_with_brackets + ' }', s)
+
+    
+    return s

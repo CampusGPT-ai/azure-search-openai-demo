@@ -5,6 +5,8 @@ class ProfileAugmentations:
         self.profile = profile
 
     def generate_search_filter(self):
+        if self.profile is None:
+            return ""
         filterExTemplate = "tags/any(t: t eq '{tag}') or"
         filter_conditions = ""
         demo_tags = self.__get_demographic_tags()
@@ -17,6 +19,8 @@ class ProfileAugmentations:
         return "{filters} not tags/any()".format(filters=filter_conditions)
     
     def generate_profile_few_shot(self) -> list[dict[str, str]]:
+        if self.profile is None:
+            return []
         return ProfileAugmentations.replace_profile_placeholder(self.profile.academics.get("Major"),
                                                                 self.profile.academics.get("Academic Year"),
                                                                 ProfileAugmentations.list_to_string(self.profile.courses))
