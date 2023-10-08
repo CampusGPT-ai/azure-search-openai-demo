@@ -139,25 +139,29 @@ const Layout = () => {
                                     <div className={styles.profileBox}>
                                         <span className={styles.avatar}>{loggedInUser?.full_name}</span>
 
-                                        {loggedInUser?.avatar ? (
+                                        {selectedProfile != "none" && loggedInUser?.avatar ? (
                                             <>
-                                                <img
-                                                    src={avatarImages[loggedInUser.avatar]}
-                                                    alt="User Avatar"
-                                                    width={50}
-                                                    height={50}
-                                                    style={{ borderRadius: "50%" }}
-                                                />
-                                                <CaretDown24Filled
-                                                    ref={profilePopButtonRef}
-                                                    style={{ marginLeft: "6px" }}
-                                                    onClick={() => {
-                                                        console.log("button ref" + profilePopButtonRef.current);
-                                                        setProfilePopAnchor(profilePopButtonRef.current);
-                                                        if (showProfile) setShowProfile(false);
-                                                        else setShowProfile(true);
-                                                    }}
-                                                />
+                                                {loggedInUser?.avatar && (
+                                                    <>
+                                                        <img
+                                                            src={avatarImages[loggedInUser.avatar]}
+                                                            alt="User Avatar"
+                                                            width={50}
+                                                            height={50}
+                                                            style={{ borderRadius: "50%" }}
+                                                        />
+                                                        <CaretDown24Filled
+                                                            ref={profilePopButtonRef}
+                                                            style={{ marginLeft: "6px" }}
+                                                            onClick={() => {
+                                                                console.log("button ref" + profilePopButtonRef.current);
+                                                                setProfilePopAnchor(profilePopButtonRef.current);
+                                                                if (showProfile) setShowProfile(false);
+                                                                else setShowProfile(true);
+                                                            }}
+                                                        />
+                                                    </>
+                                                )}
                                             </>
                                         ) : (
                                             <NavLink
