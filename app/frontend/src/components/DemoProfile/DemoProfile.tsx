@@ -75,7 +75,10 @@ export const DemoProfile = ({
 
     let interestStr: string = "";
     interests.forEach((x, i, arr) => {
-        interestStr = interestStr + ", " + x;
+        if (interestStr.length > 0) {
+            interestStr = interestStr + ", ";
+        }
+        interestStr = interestStr + x;
     });
 
     let interestList: Array<InterestModel> = [];
@@ -108,9 +111,9 @@ export const DemoProfile = ({
                 </div>
             )}
             {!isMeViewing && (
-                <div className={styles.contentSection}>
-                    <h1>Your Interests</h1>
-                    <InterestList list={interestList} onInterestChanged={onInterestChanged} />
+                <div className={styles.infoContainer}>
+                    <Subtitle2>Interests</Subtitle2>
+                    <div>{interestStr}</div>
                 </div>
             )}
         </div>
