@@ -327,34 +327,21 @@ const Chat = () => {
 
     return (
         <>
-            <div style={{ position: "sticky", top: "0px", left: "30px", zIndex: 50, width: "100px" }}></div>
             <div className={styles.container}>
-                <div
-                    className={styles.contentHeader}
-                    style={{
-                        display: selectedProfile === "none" ? "none" : "block"
-                    }}
-                >
-                    <h3>Your Interests</h3>
-
-                    <Popover onOpenChange={handleOpenChange} open={profilePopOpen} positioning={{ positioningRef: profilePopPositioningRef }}>
-                        <PopoverSurface style={{ backgroundColor: "lightgray" }}>
-                            <ProfilePopover
-                                profile={profile}
-                                interestList={interestList}
-                                onInterestChanged={handleInterestChange}
-                                onLogout={() => {
-                                    setProfilePopOpen(false);
-                                    setUser(null);
-                                    void 0;
-                                }}
-                            ></ProfilePopover>
-                        </PopoverSurface>
-                    </Popover>
-                    <div className={styles.contentSection}>
-                        <InterestList list={interestList} onInterestChanged={handleInterestChange} />
-                    </div>
-                </div>
+                <Popover onOpenChange={handleOpenChange} open={profilePopOpen} positioning={{ positioningRef: profilePopPositioningRef }}>
+                    <PopoverSurface style={{ backgroundColor: "lightgray" }}>
+                        <ProfilePopover
+                            profile={profile}
+                            interestList={interestList}
+                            onInterestChanged={handleInterestChange}
+                            onLogout={() => {
+                                setProfilePopOpen(false);
+                                setUser(null);
+                                void 0;
+                            }}
+                        ></ProfilePopover>
+                    </PopoverSurface>
+                </Popover>
 
                 <div className={styles.chatSection}>
                     <Stack horizontal horizontalAlign="stretch">

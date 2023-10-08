@@ -46,7 +46,7 @@ const CitationDrawer = ({ cite, isOpen, onClose }: Props) => {
                     </DrawerHeaderTitle>
                 </DrawerHeader>
                 <DrawerBody>
-                    <iframe title="Citation" src={cite} width="100%" height="810px" />
+                    <iframe title="Citation" src={cite} width="100%" height="810px" style={{ border: 0 }} />
                 </DrawerBody>
             </DrawerOverlay>
         </div>

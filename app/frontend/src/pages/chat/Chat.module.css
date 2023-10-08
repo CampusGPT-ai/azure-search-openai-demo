@@ -2,7 +2,9 @@
     flex: 1;
     display: flex;
     flex-direction: column;
-    margin-top: 20px;
+    margin-top: 3vh;
+    height: 85vh;
+    width: 100%;
 }
 
 .chatRoot {
@@ -16,12 +18,15 @@
     flex-direction: column;
     align-items: center;
     width: 100%;
+    height: 88vh;
 }
 
 .chatHistoryContainer {
     background-color: #fff;
     color: #000000;
     width: 20rem;
+    height: 88vh;
+    overflow-y: hidden;
     border-top-left-radius: 6px;
     border-bottom-left-radius: 6px;
     background: linear-gradient(105deg, #f3ede1 46%, #782f40 100%);
@@ -33,7 +38,8 @@
     box-shadow:
         4px 4px 8px rgba(0, 0, 0, 0.14),
         0px 0px 4px rgba(0, 0, 0, 0.12);
-    margin: 16px;
+    margin-left: 16px;
+    margin-right: 16px;
 }
 
 .chatEmptyState {
