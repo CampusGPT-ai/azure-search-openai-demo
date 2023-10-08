@@ -414,26 +414,35 @@ Return results in JSON format with the answer and topic as separate elements, ma
         my_classes = "I have not taken any classes yet."
         if classes_list is not None and len(classes_list) > 0:
             my_classes = ", ".join(classes_list)
-        message_builder.append_message('user', f"Major: {major}\nYear: {year}\nClasses taken: {my_classes}")
+        message_builder.append_to_end('user', f"Major: {major}\nYear: {year}\nClasses taken: {my_classes}")
     
     # Conversation history
     for h in conversation_history:
         if bot_msg := h.get("bot"):
-            message_builder.append_message(ChatReadRetrieveReadApproach.ASSISTANT, bot_msg)
+            message_builder.append_to_end(ChatReadRetrieveReadApproach.ASSISTANT, bot_msg)
         if user_msg := h.get("user"):
-            message_builder.append_message(ChatReadRetrieveReadApproach.USER, user_msg)
+            message_builder.append_to_end(ChatReadRetrieveReadApproach.USER, user_msg)
         if message_builder.token_length > max_tokens:
             break
 
-    user_question = user_question + "\n\If the response contains lists of text, put each item in a sepearate line in the response to make it easier to read."
+    user_question = user_question + "\n\If the response contains lists of text inside the ""response to user question"", put each item in a sepearate line in the response to make it easier to read. Do not put new lines that will break the validity of the JSON response"
     source_str = sources
-    message_builder.append_message('user', f"{user_question}\n\nSources:\n{source_str}")
+    message_builder.append_to_end('user', f"{user_question}\n\nSources:\n{source_str}")
+
+    json_return_reminder = """
+Return results in JSON format with the answer and topic as separate elements, make sure what is returned is proper JSON, following this example:
+{ "topic": "conversation topic", "answer": "response to user question" }.
+"""
+    message_builder.append_to_end('system', json_return_reminder)
     
     messages = message_builder.messages
     return messages
 
 @staticmethod
 def escape_string(s):
+    s = s.lstrip('\n')
+    s = re.sub(r'^\{\n', '{', s)
+    s = re.sub(r'\n\}$', '}', s)
     s = s.replace('\\', '\\\\')   # Escape backslashes first
     #s = s.replace('"', '\\"')     # Escape double quotes
     s = s.replace('\b', '\\b')    # Escape backspaces
@@ -442,12 +451,11 @@ def escape_string(s):
     s = s.replace('\r', '\\r')    # Escape carriage returns
     s = s.replace('\t', '\\t')    # Escape tabs
 
+
     match = re.search(r'(\[.*?\])\s*}$', s)
     if match:
         content_with_brackets = match.group(1)
-        
-        # Replace the "answer" block with the appended content
-        s = re.sub(r'("answer": ".*?")\s*\[.*?\]\s*}$', r'\1 ' + content_with_brackets + ' }', s)
+        s = re.sub(r'("answer": ".*")\s*\[.*?\]\s*}$', r'\1 ' + content_with_brackets + ' }', s)
 
     
     return s

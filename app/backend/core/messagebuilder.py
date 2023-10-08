@@ -23,3 +23,8 @@ class MessageBuilder:
         self.messages.insert(index, {'role': role, 'content': content})
         self.token_length += num_tokens_from_messages(
             self.messages[index], self.model)
+        
+    def append_to_end(self, role: str, content: str):
+        self.append_message(role, content, len(self.messages))
+        self.token_length += num_tokens_from_messages(  
+            self.messages[-1], self.model)
