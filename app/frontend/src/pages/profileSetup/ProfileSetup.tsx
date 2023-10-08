@@ -96,7 +96,6 @@ const ProfileSetup = () => {
                                 </StackItem>
                             </div>
                         ))}
-                        ;
                     </Stack>
                     <form onSubmit={handleSubmit}>
                         <div className={styles.loginButtonContainer}>

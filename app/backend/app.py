@@ -176,18 +176,22 @@ async def demoLogin():
         except Exception as e: 
             return jsonify({"message": "User Profile not found" + str(e)}), 404
     
-@bp.route("/current_profile", methods=["GET"])
-async def get_current_profile():
+@bp.route("/current_profile", methods=["POST"])
+async def current_profile():
     try:
-        profile_id = session[CONFIG_CURRENT_USER]
-
-        profile = Profile.load_by_id(profile_id)
-        if (profile is None):
-            return jsonify({"message": "No user is logged in"}), 404
+        request_json = await request.get_json()
+        profile_id = request_json["profile_id"]
         
-        return jsonify({ "profile": profile.to_json()})
+        if (profile_id == ""):
+            session[CONFIG_CURRENT_USER] = ""
+            return jsonify({ "profile": None})
+        else:
+            profile = Profile.load_by_id(profile_id)
+            session[CONFIG_CURRENT_USER] = profile.id
+            return jsonify({ "profile": profile.to_json()})
+
     except Exception as e:
-         return jsonify({"message": "No user is logged in"}), 404
+         return jsonify({"message": str(e)}), 500
 
 @bp.route("/demo_profiles", methods=["GET"])
 async def get_demo_profiles() :

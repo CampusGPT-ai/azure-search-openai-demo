@@ -337,7 +337,7 @@ const Chat = () => {
                             onLogout={() => {
                                 setProfilePopOpen(false);
                                 setUser(null);
-                                void 0;
+                                setSelectedProfile("");
                             }}
                         ></ProfilePopover>
                     </PopoverSurface>

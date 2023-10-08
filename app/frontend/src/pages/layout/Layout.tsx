@@ -72,16 +72,14 @@ const Layout = () => {
 
     const makeCurrentUserApiRequest = async () => {
         console.log("logging in user for profile: " + selectedProfile); //this is logging "none"
-        if (selectedProfile !== "none") {
-            setIsLoading(true);
-            try {
-                const result = await currentProfileApi();
-                setLoggedInUser(result.profile);
-            } catch (e) {
-                console.log("no user logged in - keeping default profile with: " + user?.avatar);
-            } finally {
-                setIsLoading(false);
-            }
+        setIsLoading(true);
+        try {
+            const result = await currentProfileApi(selectedProfile);
+            setLoggedInUser(result.profile);
+        } catch (e) {
+            console.log("no user logged in - keeping default profile with: " + user?.avatar);
+        } finally {
+            setIsLoading(false);
         }
     };
 

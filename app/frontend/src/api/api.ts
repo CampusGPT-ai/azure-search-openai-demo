@@ -107,13 +107,16 @@ export async function conversationsApi(): Promise<ConversationsResponse> {
     }
 }
 
-export async function currentProfileApi(): Promise<ProfileResponse> {
+export async function currentProfileApi(profile_id: string): Promise<ProfileResponse> {
     try {
         const response = await fetch("/current_profile", {
-            method: "GET",
+            method: "POST",
             headers: {
                 "Content-Type": "application/json"
-            }
+            },
+            body: JSON.stringify({
+                profile_id: profile_id
+            })
         });
 
         const parsedResponse: ProfileResponse = await response.json();
