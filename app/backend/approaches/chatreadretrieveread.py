@@ -113,6 +113,13 @@ Only generate questions and do not generate any text before or after the questio
         user_q = 'Generate search query for: ' + user_query
 
 
+        print("#################################################")
+        print("New Run")
+        print()
+        print()
+        print("User Query:  " + user_query)
+
+
         #load profile from session
     
         try: 
@@ -140,7 +147,8 @@ Only generate questions and do not generate any text before or after the questio
         # load history from persisted store based on the conversation
         history = ChatHistory.load_by_conversation(currentConversation.id)
 
-        print("History")
+        print()
+        print("History Length: " + str(len(history)))
         for h in history:
             print(h)    
             print()
@@ -167,6 +175,8 @@ Only generate questions and do not generate any text before or after the questio
             n=1)
 
         query_text = chat_completion.choices[0].message.content
+        print()
+        print("Query Text")
         print(query_text)
         if query_text.strip() == "0":
             query_text = user_query # Use the last user input if we failed to generate a better query
@@ -404,7 +414,7 @@ Return results in JSON format with the answer and topic as separate elements, ma
         message_builder.append_message('user', f"Major: {major}\nYear: {year}\nClasses taken: {', '.join(classes_list)}")
     
     # Conversation history
-    for h in conversation_history[:-1]:
+    for h in conversation_history:
         if bot_msg := h.get("bot"):
             message_builder.append_message(ChatReadRetrieveReadApproach.ASSISTANT, bot_msg)
         if user_msg := h.get("user"):
@@ -417,7 +427,7 @@ Return results in JSON format with the answer and topic as separate elements, ma
             user_question = user_question + "\n\nYour answer should two bullet point sections that call out the classes taken and those that still need to be taken or are a set of requirements.  If there are no classes taken leave that bullet list out."
 
     source_str = sources
-    message_builder.append_message('user', f"{user_question}\n\nSources:\n{source_str}",2)
+    message_builder.append_message('user', f"{user_question}\n\nSources:\n{source_str}")
     
     messages = message_builder.messages
     return messages
