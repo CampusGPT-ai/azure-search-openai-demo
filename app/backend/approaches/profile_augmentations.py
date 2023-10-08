@@ -7,6 +7,10 @@ class ProfileAugmentations:
     def generate_search_filter(self):
         if self.profile is None:
             return ""
+        if self.profile.id == "":
+            return ""
+        if self.profile.academics is None:
+            return ""
         filterExTemplate = "tags/any(t: t eq '{tag}') or"
         filter_conditions = ""
         demo_tags = self.__get_demographic_tags()
@@ -19,7 +23,14 @@ class ProfileAugmentations:
         return "{filters} not tags/any()".format(filters=filter_conditions)
     
     def generate_profile_few_shot(self) -> list[dict[str, str]]:
+        print("ID is: " + self.profile.id )
+        print("academics is: " + str(self.profile.academics))
+        print("demographics is: " + str(self.profile.demographics))
         if self.profile is None:
+            return []
+        if self.profile.id == "":
+            return []
+        if self.profile.academics is None:
             return []
         return ProfileAugmentations.replace_profile_placeholder(self.profile.academics.get("Major"),
                                                                 self.profile.academics.get("Academic Year"),
@@ -31,6 +42,8 @@ class ProfileAugmentations:
 
     @staticmethod
     def replace_profile_placeholder(major_value, year_value, classes_value) ->list[dict[str, str]]:
+       if major_value is None or major_value == "":
+         return []
        profile_info = [
            {'role' : 'user', 'content' : 'My major is [MAJOR] and I am in year [YEAR]' },
 

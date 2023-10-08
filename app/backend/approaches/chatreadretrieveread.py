@@ -407,7 +407,7 @@ Return results in JSON format with the answer and topic as separate elements, ma
     message_builder = MessageBuilder(system_instruction, model_id)
     
     # User info
-    if profile is not None: 
+    if profile is not None and profile.academics is not None: 
         major = profile.academics.get("Major")
         year = profile.academics.get("Academic Year")
         classes_list = profile.courses
@@ -455,7 +455,7 @@ def escape_string(s):
     match = re.search(r'(\[.*?\])\s*}$', s)
     if match:
         content_with_brackets = match.group(1)
-        s = re.sub(r'("answer": ".*")\s*\[.*?\]\s*}$', r'\1 ' + content_with_brackets + ' }', s)
+        s = re.sub(r'("answer": "([^"]*)")\s*\[.*?\]\s*}$', r'\1 ' + content_with_brackets + ' }', s)
 
     
     return s
