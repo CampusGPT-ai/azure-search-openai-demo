@@ -1,8 +1,8 @@
-import { useRef, useState, useEffect, useContext } from "react";
+import { useRef, useState, useEffect, useContext, forwardRef } from "react";
 import { getLocalStorage, setLocalStorage } from "../../utilities/stateManagement";
 import { v4 as uuid } from "uuid";
 import { Stack, StackItem } from "@fluentui/react";
-import { UserContext, TopicContext } from "../../contextVariables";
+import { UserContext, TopicContext, updateSelectedInterestFunc } from "../../contextVariables";
 import ChatContainer from "../../components/ChatContainer/chatContainer";
 import { getDistinctTopics, filterTopicsByInterests, getQuestionsByTopic } from "../../components/Topics/TopicUtilities";
 import CitationDrawer from "../../components/Citation/citationDrawer";
@@ -20,6 +20,12 @@ import {
 import { InterestList } from "../../components/Interests/InterestList";
 import { TopicList } from "../../components/Topics/TopicList";
 import { UserConversations } from "../../components/UserChatHistory/UserConversationsRedo";
+import { CaretDown24Filled } from "@fluentui/react-icons";
+import { ProfilePopover } from "../../components/ProfilePopover/ProfilePopover";
+import { Popover, PopoverSurface } from "@fluentui/react-components";
+import { ProfileModel, createDefaultProfile } from "../../api";
+import type { PositioningImperativeRef, PopoverTriggerChildProps, PopoverProps } from "@fluentui/react-components";
+import { useProfilePopAnchor, useShowProfile } from "../layout/Layout";
 
 import styles from "./Chat.module.css";
 
@@ -44,6 +50,7 @@ const Chat = () => {
     const [isNewConversation, setIsNewConversation] = useState<boolean>(getLocalStorage<boolean>("isNewConversation") || false);
     const [conversationId, setConversationId] = useState<string>(getLocalStorage<string>("conversationId") || uuid().toString());
     const [activeConversation, setActiveConversation] = useState<ConversationsModel | null>(null);
+    const [profilePopOpen, setProfilePopOpen] = useState(false);
 
     let conversationsList: Array<ConversationsModel> = [];
     if (conversations?.list) {
@@ -107,13 +114,13 @@ const Chat = () => {
             const minor = user.academics.Minor;
             if (major) {
                 interestsAsModel.push({
-                    interest: major + " major",
+                    interest: major + " Major",
                     selected: false
                 });
             }
             if (minor) {
                 interestsAsModel.push({
-                    interest: minor + " minor",
+                    interest: minor + " Minor",
                     selected: false
                 });
             }
@@ -164,11 +171,11 @@ const Chat = () => {
     };
 
     const handleInterestChange = (interest: InterestModel) => {
-        //console.log(`Handling interest change for interest ${JSON.stringify(interest)}`);
+        console.log(`Handling interest change for interest ${JSON.stringify(interest)}`);
 
         // Call setCheckedInterests to update the state.
         setCheckedInterests(prevInterests => {
-            //console.log("Previous checked interests:", JSON.stringify(prevInterests));
+            console.log("Previous checked interests:", JSON.stringify(prevInterests));
 
             // Create a new array using the map method, where each item is updated based on the condition.
             const updatedInterests = prevInterests.map(item => {
@@ -297,54 +304,84 @@ const Chat = () => {
     useEffect(() => {
         setLocalStorage("isNewChat", isNewConversation);
     }, [isNewConversation]);
+
+    // wiring up of profile popover to header button
+    const { showProfile } = useShowProfile();
+    const handleOpenChange: PopoverProps["onOpenChange"] = (e, data) => setProfilePopOpen(data.open || false);
+    const { profilePopAnchor } = useProfilePopAnchor();
+    const profilePopPositioningRef = useRef<PositioningImperativeRef>(null);
+
+    useEffect(() => {
+        console.log("showProfile state change: ", showProfile);
+        setProfilePopOpen(showProfile);
+    }, [showProfile]);
+
+    useEffect(() => {
+        if (profilePopAnchor) {
+            profilePopPositioningRef.current?.setTarget(profilePopAnchor);
+        }
+    }, [profilePopAnchor, profilePopPositioningRef]);
+
+    let profile: ProfileModel = createDefaultProfile();
+    if (user != null) profile = user;
+
     return (
-        <div className={styles.container}>
-            <div
-                className={styles.contentHeader}
-                style={{
-                    display: selectedProfile === "none" ? "none" : "block"
-                }}
-            >
-                <h3>Your Interests</h3>
-                <div className={styles.contentSection}>
-                    <InterestList list={interestList} onInterestChanged={handleInterestChange} />
+        <>
+            <div style={{ position: "sticky", top: "0px", left: "30px", zIndex: 50, width: "100px" }}></div>
+            <div className={styles.container}>
+                <div
+                    className={styles.contentHeader}
+                    style={{
+                        display: selectedProfile === "none" ? "none" : "block"
+                    }}
+                >
+                    <h3>Your Interests</h3>
+
+                    <Popover onOpenChange={handleOpenChange} open={profilePopOpen} positioning={{ positioningRef: profilePopPositioningRef }}>
+                        <PopoverSurface style={{ backgroundColor: "lightgray" }}>
+                            <ProfilePopover profile={profile} interestList={interestList} onInterestChanged={handleInterestChange}></ProfilePopover>
+                        </PopoverSurface>
+                    </Popover>
+                    <div className={styles.contentSection}>
+                        <InterestList list={interestList} onInterestChanged={handleInterestChange} />
+                    </div>
+                </div>
+
+                <div className={styles.chatSection}>
+                    <Stack horizontal horizontalAlign="stretch">
+                        <StackItem
+                            className={styles.chatHistoryContainer}
+                            disableShrink
+                            style={{
+                                display: selectedProfile === "none" ? "none" : "block"
+                            }}
+                        >
+                            <UserConversations //chat history
+                                conversations={conversationsList}
+                                onConversationClicked={onConversationSelected}
+                                onNewChatClicked={() => startNewChat()}
+                            />
+                        </StackItem>
+                        <StackItem className={styles.chatInputContainer}>
+                            <ChatContainer
+                                examples={topicsList ? topicsList : []}
+                                answers={chatHistory}
+                                makeApiRequest={(question: string) => {
+                                    setIsLoading(true);
+                                    makeApiRequest(question);
+                                }}
+                                isLoading={isLoading}
+                                error={error}
+                                onShowCitation={c => {
+                                    onShowCitation(c);
+                                }}
+                            ></ChatContainer>
+                            <CitationDrawer cite={activeCitation} isOpen={isCitationPanelOpen} onClose={() => setIsCitationPanelOpen(false)}></CitationDrawer>
+                        </StackItem>
+                    </Stack>
                 </div>
             </div>
-
-            <div className={styles.chatSection}>
-                <Stack horizontal horizontalAlign="stretch">
-                    <StackItem
-                        className={styles.chatHistoryContainer}
-                        disableShrink
-                        style={{
-                            display: selectedProfile === "none" ? "none" : "block"
-                        }}
-                    >
-                        <UserConversations //chat history
-                            conversations={conversationsList}
-                            onConversationClicked={onConversationSelected}
-                            onNewChatClicked={() => startNewChat()}
-                        />
-                    </StackItem>
-                    <StackItem className={styles.chatInputContainer}>
-                        <ChatContainer
-                            examples={topicsList ? topicsList : []}
-                            answers={chatHistory}
-                            makeApiRequest={(question: string) => {
-                                setIsLoading(true);
-                                makeApiRequest(question);
-                            }}
-                            isLoading={isLoading}
-                            error={error}
-                            onShowCitation={c => {
-                                onShowCitation(c);
-                            }}
-                        ></ChatContainer>
-                        <CitationDrawer cite={activeCitation} isOpen={isCitationPanelOpen} onClose={() => setIsCitationPanelOpen(false)}></CitationDrawer>
-                    </StackItem>
-                </Stack>
-            </div>
-        </div>
+        </>
     );
 };
 

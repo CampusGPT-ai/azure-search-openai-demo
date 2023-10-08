@@ -23,10 +23,15 @@ avatars.set("tiffany", tiffany);
 
 interface Props {
     profile: ProfileModel;
+    interestList: InterestModel[];
     onInterestChanged: (interests: InterestModel) => void;
 }
 
-export const ProfilePopover = ({ profile: { id, user_id, full_name, avatar, interests, demographics, academics, courses }, onInterestChanged }: Props) => {
+export const ProfilePopover = ({
+    profile: { id, user_id, full_name, avatar, interests, demographics, academics, courses },
+    interestList,
+    onInterestChanged
+}: Props) => {
     let demoStr: string = "";
     let demo_keys = Object.keys(demographics);
     let demo_values = Object.values(demographics);
@@ -58,8 +63,8 @@ export const ProfilePopover = ({ profile: { id, user_id, full_name, avatar, inte
         courseStr = courseStr + x;
     });
 
-    let interestList: Array<InterestModel> = [];
-    if (interests) interestList = interests.map((x, i, arr) => ({ interest: x, selected: false }));
+    // let interestList: Array<InterestModel> = [];
+    // if (interests) interestList = interests.map((x, i, arr) => ({ interest: x, selected: false }));
 
     return (
         <Stack className={styles.profileContainer}>

@@ -1,5 +1,8 @@
 import React from "react";
-import { ProfileModel, TopicModel } from "./api/models";
+import { InterestModel, ProfileModel, TopicModel } from "./api/models";
+import { usePresenceBadgeStyles_unstable } from "@fluentui/react-components";
+
+export type updateSelectedInterestFunc = (interest: InterestModel) => void;
 
 // Initial context state
 const initialUserState = {

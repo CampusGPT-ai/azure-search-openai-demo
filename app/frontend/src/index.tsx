@@ -3,7 +3,8 @@ import ReactDOM from "react-dom/client";
 import { createHashRouter, RouterProvider } from "react-router-dom";
 import { initializeIcons } from "@fluentui/react";
 import { UserContext, TopicContext } from "./contextVariables";
-import { ProfileModel, TopicModel, createDefaultProfile } from "./api";
+import { InterestModel, ProfileModel, TopicModel, createDefaultProfile } from "./api";
+import { updateSelectedInterestFunc } from "./contextVariables";
 
 import "./index.css";
 
@@ -16,6 +17,7 @@ initializeIcons();
 const App: React.FC = () => {
     const [loggedInUser, setLoggedInUser] = useState<ProfileModel | null>(createDefaultProfile());
     const [selectedProfile, setSelectedProfile] = useState<string>("none");
+    const [updateSelectedInterest, setUpdateSelectedInterest] = useState<updateSelectedInterestFunc>((interest: InterestModel) => {});
     const [topics, setTopics] = useState<TopicModel[]>([]);
     const router = createHashRouter([
         {
@@ -41,7 +43,12 @@ const App: React.FC = () => {
 
     return (
         <UserContext.Provider
-            value={{ user: loggedInUser, selectedProfile: selectedProfile, setSelectedProfile: setSelectedProfile, setUser: setLoggedInUser }}
+            value={{
+                user: loggedInUser,
+                selectedProfile: selectedProfile,
+                setSelectedProfile: setSelectedProfile,
+                setUser: setLoggedInUser
+            }}
         >
             <TopicContext.Provider value={{ topics: topics, setTopics: setTopics }}>
                 <RouterProvider router={router} />

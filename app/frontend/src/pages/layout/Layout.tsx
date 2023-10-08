@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect, useContext, ContextType, useRef } from "react";
 import { Outlet, NavLink, Link, useOutletContext } from "react-router-dom";
 import seal from "../../assets/fsu-seal-3d-160x160.png";
 import { Image, ImageFit } from "@fluentui/react";
@@ -67,6 +67,8 @@ const Layout = () => {
     const [loggedInUser, setLoggedInUser] = useState<ProfileModel | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [error, setError] = useState<unknown>();
+    const [showProfile, setShowProfile] = useState<boolean>(false);
+    const [profilePopAnchor, setProfilePopAnchor] = useState<SVGSVGElement | null>(null);
 
     const makeCurrentUserApiRequest = async () => {
         console.log("logging in user for profile: " + selectedProfile); //this is logging "none"
@@ -107,13 +109,8 @@ const Layout = () => {
         setUser(loggedInUser);
     }, [loggedInUser]);
 
-    const { user } = useContext(UserContext);
-    let loggedIn: boolean = user != null;
-    let profile = user == null ? undefined : user;
-
-    const onInterestChanged = (interest: InterestModel) => {
-        console.log("interest changed in Layout " + interest.interest + " selected:" + interest.selected);
-    };
+    type ContextType = { showProfile: boolean };
+    const profilePopButtonRef = useRef(null);
 
     return (
         <FluentProvider theme={lightTheme}>
@@ -145,15 +142,16 @@ const Layout = () => {
                                                     height={50}
                                                     style={{ borderRadius: "50%" }}
                                                 />
-
-                                                <Popover>
-                                                    <PopoverTrigger>
-                                                        <CaretDown24Filled style={{ marginLeft: "6px" }} />
-                                                    </PopoverTrigger>
-                                                    <PopoverSurface style={{ backgroundColor: "lightgray" }}>
-                                                        <ProfilePopover profile={loggedInUser} onInterestChanged={onInterestChanged}></ProfilePopover>
-                                                    </PopoverSurface>
-                                                </Popover>
+                                                <CaretDown24Filled
+                                                    ref={profilePopButtonRef}
+                                                    style={{ marginLeft: "6px" }}
+                                                    onClick={() => {
+                                                        console.log("button ref" + profilePopButtonRef.current);
+                                                        setProfilePopAnchor(profilePopButtonRef.current);
+                                                        if (showProfile) setShowProfile(false);
+                                                        else setShowProfile(true);
+                                                    }}
+                                                />
                                             </>
                                         ) : (
                                             <NavLink
@@ -175,10 +173,18 @@ const Layout = () => {
                     </div>
                 </header>
 
-                <Outlet />
+                <Outlet context={{ showProfile, profilePopAnchor }} />
             </div>
         </FluentProvider>
     );
 };
+
+export function useShowProfile() {
+    return useOutletContext<{ showProfile: boolean }>();
+}
+
+export function useProfilePopAnchor() {
+    return useOutletContext<{ profilePopAnchor: SVGSVGElement }>();
+}
 
 export default Layout;
