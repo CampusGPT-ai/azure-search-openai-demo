@@ -411,7 +411,10 @@ Return results in JSON format with the answer and topic as separate elements, ma
         major = profile.academics.get("Major")
         year = profile.academics.get("Academic Year")
         classes_list = profile.courses
-        message_builder.append_message('user', f"Major: {major}\nYear: {year}\nClasses taken: {', '.join(classes_list)}")
+        my_classes = "I have not taken any classes yet."
+        if classes_list is not None and len(classes_list) > 0:
+            my_classes = ", ".join(classes_list)
+        message_builder.append_message('user', f"Major: {major}\nYear: {year}\nClasses taken: {my_classes}")
     
     # Conversation history
     for h in conversation_history:
@@ -422,10 +425,7 @@ Return results in JSON format with the answer and topic as separate elements, ma
         if message_builder.token_length > max_tokens:
             break
 
-    # New user question and sources
-    if any(substring in user_question for substring in ["class", "course", "classes", "courses"]):
-            user_question = user_question + "\n\nYour answer should two bullet point sections that call out the classes taken and those that still need to be taken or are a set of requirements.  If there are no classes taken leave that bullet list out."
-
+    user_question = user_question + "\n\If the response contains lists of text, put each item in a sepearate line in the response to make it easier to read."
     source_str = sources
     message_builder.append_message('user', f"{user_question}\n\nSources:\n{source_str}")
     
