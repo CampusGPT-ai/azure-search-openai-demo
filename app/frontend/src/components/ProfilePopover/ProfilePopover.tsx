@@ -25,12 +25,14 @@ interface Props {
     profile: ProfileModel;
     interestList: InterestModel[];
     onInterestChanged: (interests: InterestModel) => void;
+    onLogout: () => void;
 }
 
 export const ProfilePopover = ({
     profile: { id, user_id, full_name, avatar, interests, demographics, academics, courses },
     interestList,
-    onInterestChanged
+    onInterestChanged,
+    onLogout
 }: Props) => {
     let demoStr: string = "";
     let demo_keys = Object.keys(demographics);
@@ -74,7 +76,7 @@ export const ProfilePopover = ({
                     <Button
                         style={{ marginLeft: "40px", float: "right" }}
                         onClick={el => {
-                            console.log("logout button clicked");
+                            onLogout();
                         }}
                     >
                         Logout

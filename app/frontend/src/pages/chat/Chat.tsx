@@ -30,7 +30,7 @@ import { useProfilePopAnchor, useShowProfile } from "../layout/Layout";
 import styles from "./Chat.module.css";
 
 const Chat = () => {
-    const { user, selectedProfile, setSelectedProfile } = useContext(UserContext);
+    const { user, setUser, selectedProfile, setSelectedProfile } = useContext(UserContext);
     const { topics } = useContext(TopicContext);
     const prevTopicsRef = useRef<TopicModel[]>([]);
     const prevCheckedInterestsRef = useRef<InterestModel[]>([]);
@@ -339,7 +339,16 @@ const Chat = () => {
 
                     <Popover onOpenChange={handleOpenChange} open={profilePopOpen} positioning={{ positioningRef: profilePopPositioningRef }}>
                         <PopoverSurface style={{ backgroundColor: "lightgray" }}>
-                            <ProfilePopover profile={profile} interestList={interestList} onInterestChanged={handleInterestChange}></ProfilePopover>
+                            <ProfilePopover
+                                profile={profile}
+                                interestList={interestList}
+                                onInterestChanged={handleInterestChange}
+                                onLogout={() => {
+                                    setProfilePopOpen(false);
+                                    setUser(null);
+                                    void 0;
+                                }}
+                            ></ProfilePopover>
                         </PopoverSurface>
                     </Popover>
                     <div className={styles.contentSection}>

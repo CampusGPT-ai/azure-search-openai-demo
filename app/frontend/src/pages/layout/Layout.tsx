@@ -109,6 +109,12 @@ const Layout = () => {
         setUser(loggedInUser);
     }, [loggedInUser]);
 
+    useEffect(() => {
+        setUser(user);
+        setLoggedInUser(user);
+        setShowProfile(false);
+    }, [user]);
+
     type ContextType = { showProfile: boolean };
     const profilePopButtonRef = useRef(null);
 
