@@ -302,6 +302,7 @@ Only generate questions and do not generate any text before or after the questio
             bot_content=chat_content_json.get("answer")
         )
 
+        history = ChatHistory.load_by_conversation(currentConversation.id)
 
         # STEP 4: Generate a list of follow up questions
         messages = self.get_messages_from_history(
