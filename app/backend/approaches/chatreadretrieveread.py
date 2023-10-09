@@ -271,6 +271,8 @@ Only generate questions and do not generate any text before or after the questio
         print()
         print("Chat Completion")
         print()
+        #make sure GPT is not escaping newlines
+        chat_completion.choices[0].message.content = chat_completion.choices[0].message.content.replace('\\n', '\n')
         print(chat_completion.choices[0].message.content)
 
 
@@ -402,6 +404,7 @@ You are an assistant specialized in academic advising. Follow these guidelines:
 - For any lists of text less than 15 characters give the list as three columns of text.
 - For details in table format, return them as an HTML table, not in markdown or any other format.
 - If a clarifying question is needed, ask the user.
+- If using multiple lines in the response is helpful, especially if there are lists of text, use multiple lines.
 Return results in JSON format with the answer and topic as separate elements, following this examples:
 { "topic": "conversation topic", "answer": "response to user question" }
 { "topic": "conversation topic2", "answer" "response to user 
