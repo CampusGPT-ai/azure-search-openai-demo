@@ -204,14 +204,16 @@ const Chat = () => {
     };
 
     const makeConversationsApiRequest = async () => {
-        setIsLoading(true);
-        try {
-            const result = await conversationsApi();
-            setConversations(result);
-        } catch (e) {
-            setError(e);
-        } finally {
-            setIsLoading(false);
+        if (selectedProfile != "" && selectedProfile != "none") {
+            setIsLoading(true);
+            try {
+                const result = await conversationsApi();
+                setConversations(result);
+            } catch (e) {
+                setError(e);
+            } finally {
+                setIsLoading(false);
+            }
         }
     };
 
