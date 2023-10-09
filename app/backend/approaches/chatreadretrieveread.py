@@ -380,14 +380,12 @@ Only generate questions and do not generate any text before or after the questio
         return messages
     
 
-@staticmethod
 def encode_for_json(input_str):
     # Use json.dumps to safely encode the string
     json_encoded = json.dumps(input_str)
     # Strip the outer double quotes
     return json_encoded[1:-1]
 
-@staticmethod
 def generate_gpt_prompt(model_id, profile, conversation_history, user_question, sources, max_tokens=4096):
     # Start with the system message
     
@@ -447,7 +445,6 @@ question2" }.
     messages = message_builder.messages
     return messages
 
-@staticmethod
 def escape_string(s):
     s = s.lstrip('\n')
     s = re.sub(r'^\{\n', '{', s)
@@ -467,7 +464,6 @@ def escape_string(s):
 
 import re
 
-@staticmethod
 def move_brackets_before_brace(s):
     """Move any bracketed content immediately before the final brace inside the preceding quotes."""
     index_last_quote = s.rfind('"')
@@ -490,7 +486,6 @@ def move_brackets_before_brace(s):
 
     return s
 
-@staticmethod
 def move_brackets_after_brace(s):
     """Move any bracketed content immediately after the final brace inside the preceding quotes."""
     index_last_quote = s.rfind('"')
