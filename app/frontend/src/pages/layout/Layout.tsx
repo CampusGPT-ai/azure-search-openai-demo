@@ -135,10 +135,13 @@ const Layout = () => {
                             <ul className={styles.headerNavList}>
                                 <li>
                                     <div className={styles.profileBox}>
-                                        <span className={styles.avatar}>{loggedInUser?.full_name}</span>
 
-                                        {selectedProfile != "none" && loggedInUser?.avatar ? (
+                                          {selectedProfile != "none" && loggedInUser?.avatar ? (
                                             <>
+                                            <span className={styles.avatar}>{loggedInUser?.full_name}</span>
+
+                                     
+                                            
                                                 {loggedInUser?.avatar && (
                                                     <>
                                                         <img
