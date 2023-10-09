@@ -401,8 +401,10 @@ You are an assistant specialized in academic advising. Follow these guidelines:
 - For any lists of text less than 15 characters give the list as three columns of text.
 - For details in table format, return them as an HTML table, not in markdown or any other format.
 - If a clarifying question is needed, ask the user.
-Return results in JSON format with the answer and topic as separate elements, make sure what is returned is proper JSON, following this example:
-{ "topic": "conversation topic", "answer": "response to user question" }.
+Return results in JSON format with the answer and topic as separate elements, following this examples:
+{ "topic": "conversation topic", "answer": "response to user question" }
+{ "topic": "conversation topic2", "answer" "response to user 
+question2" }.
 """
     message_builder = MessageBuilder(system_instruction, model_id)
     
@@ -430,8 +432,11 @@ Return results in JSON format with the answer and topic as separate elements, ma
     message_builder.append_to_end('user', f"{user_question}\n\nSources:\n{source_str}")
 
     json_return_reminder = """
-Return results in JSON format with the answer and topic as separate elements, make sure what is returned is proper JSON, following this example:
-{ "topic": "conversation topic", "answer": "response to user question" }.
+Return results in JSON format with the answer and topic as separate elements, 
+except for new line in the answer portion of the response, following this examples:
+{ "topic": "conversation topic", "answer": "response to user question" }
+{ "topic": "conversation topic2", "answer" "response to user 
+question2" }.
 """
     message_builder.append_to_end('system', json_return_reminder)
     
@@ -451,11 +456,35 @@ def escape_string(s):
     s = s.replace('\r', '\\r')    # Escape carriage returns
     s = s.replace('\t', '\\t')    # Escape tabs
 
+    s = move_brackets_before_brace(s)
+    s = move_brackets_after_brace(s)
 
-    match = re.search(r'(\[.*?\])\s*}$', s)
+    return s
+
+import re
+
+@staticmethod
+def move_brackets_before_brace(s):
+    # Check if there's a [..] block just before the closing brace.
+    match = re.search(r'(\[\s*.*?\s*\])\s*\}\s*$', s)
+    
+    # If the block exists, append it to the "answer" field.
     if match:
-        content_with_brackets = match.group(1)
-        s = re.sub(r'("answer": "([^"]*)")\s*\[.*?\]\s*}$', r'\1 ' + content_with_brackets + ' }', s)
-
+        content_with_brackets = ' ' + match.group(1)
+        s = re.sub(r'("\s*answer\s*"\s*:\s*".*?")\s*\}\s*$', r'\1' + content_with_brackets + ' }', s)
     
     return s
+
+@staticmethod
+def move_brackets_after_brace(s):
+    # Check if there's a [..] block at the very end of the string.
+    match = re.search(r'\}\s*(\[\s*.*?\s*\])\s*$', s)
+    
+    # If the block exists, move it just before the closing brace and append to the "answer" field.
+    if match:
+        content_with_brackets = ' ' + match.group(1)
+        s = re.sub(r'\}\s*(\[\s*.*?\s*\])\s*$', '}', s)
+        s = re.sub(r'("\s*answer\s*"\s*:\s*".*?")\s*\}\s*$', r'\1' + content_with_brackets + ' }', s)
+    
+    return s
+
