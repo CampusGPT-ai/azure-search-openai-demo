@@ -15,9 +15,8 @@ import ProfileSetup from "./pages/profileSetup/ProfileSetup";
 initializeIcons();
 
 const App: React.FC = () => {
-    const [loggedInUser, setLoggedInUser] = useState<ProfileModel | null>(createDefaultProfile());
+    const [loggedInUser, setLoggedInUser] = useState<ProfileModel | null>(null);
     const [selectedProfile, setSelectedProfile] = useState<string>("none");
-    const [updateSelectedInterest, setUpdateSelectedInterest] = useState<updateSelectedInterestFunc>((interest: InterestModel) => {});
     const [topics, setTopics] = useState<TopicModel[]>([]);
     const router = createHashRouter([
         {
