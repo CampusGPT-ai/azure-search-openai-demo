@@ -456,8 +456,8 @@ def escape_string(s):
     s = s.replace('\r', '\\r')    # Escape carriage returns
     s = s.replace('\t', '\\t')    # Escape tabs
 
-    s = move_brackets_before_brace(s)
     s = move_brackets_after_brace(s)
+    s = move_brackets_before_brace(s)
 
     return s
 
@@ -465,26 +465,34 @@ import re
 
 @staticmethod
 def move_brackets_before_brace(s):
-    # Check if there's a [..] block just before the closing brace.
-    match = re.search(r'(\[\s*.*?\s*\])\s*\}\s*$', s)
-    
-    # If the block exists, append it to the "answer" field.
-    if match:
-        content_with_brackets = ' ' + match.group(1)
-        s = re.sub(r'("\s*answer\s*"\s*:\s*".*?")\s*\}\s*$', r'\1' + content_with_brackets + ' }', s)
-    
+    """Move any bracketed content immediately before the final brace inside the preceding quotes."""
+    index_last_quote = s.rfind('"')
+    index_last_brace = s.rfind('}')
+    bracket_content = []
+
+    i = index_last_brace - 1
+    while i > index_last_quote:
+        if s[i] == ']' and s[i-1] != '"':
+            start_index = s.rfind('[', 0, i)
+            bracket_content.insert(0, s[start_index:i+1])
+            i = start_index
+        i -= 1
+
+    for bracket in bracket_content:
+        s = s.replace(bracket, '')
+
+    if bracket_content:
+        s = s[:index_last_quote] + ' ' + ' '.join(bracket_content) + s[index_last_quote:]
+
     return s
 
 @staticmethod
 def move_brackets_after_brace(s):
-    # Check if there's a [..] block at the very end of the string.
-    match = re.search(r'\}\s*(\[\s*.*?\s*\])\s*$', s)
+    """Move any bracketed content immediately after the final brace inside the preceding quotes."""
+    index_last_quote = s.rfind('"')
+    index_last_brace = s.rfind('}')
     
-    # If the block exists, move it just before the closing brace and append to the "answer" field.
-    if match:
-        content_with_brackets = ' ' + match.group(1)
-        s = re.sub(r'\}\s*(\[\s*.*?\s*\])\s*$', '}', s)
-        s = re.sub(r'("\s*answer\s*"\s*:\s*".*?")\s*\}\s*$', r'\1' + content_with_brackets + ' }', s)
-    
+    post_brace_content = s[index_last_brace+1:].strip()
+    if post_brace_content.startswith('[') and post_brace_content.endswith(']'):
+        s = s[:index_last_quote] + ' ' + post_brace_content + '"' + s[index_last_brace:].replace(post_brace_content, '', 1)
     return s
-
