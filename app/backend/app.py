@@ -240,7 +240,7 @@ async def setup_clients():
     
     blob_client = BlobServiceClient(
         account_url=f"https://{AZURE_STORAGE_ACCOUNT}.blob.core.windows.net",
-        credential=AzureSasCredential(AZURE_STORAGE_ACCOUNT_CRED)
+        credential=AZURE_STORAGE_ACCOUNT_CRED
     )
     blob_container_client = blob_client.get_container_client(AZURE_STORAGE_CONTAINER)
 
